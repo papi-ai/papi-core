@@ -6,7 +6,7 @@ use Papi\Core\Node;
 
 /**
  * EchoNode - Node for output formatting and display
- * 
+ *
  * Formats and outputs data in various formats (JSON, XML, text)
  * with configurable pretty printing and filtering.
  */
@@ -21,9 +21,9 @@ class EchoNode extends Node
         $config = $this->config;
         $format = $config['format'] ?? 'json';
         $prettyPrint = $config['pretty_print'] ?? false;
-        
+
         $startTime = microtime(true);
-        
+
         try {
             $output = $this->formatOutput($input, $format, $prettyPrint);
             $duration = (microtime(true) - $startTime) * 1000;
@@ -35,7 +35,7 @@ class EchoNode extends Node
             ];
         } catch (\Exception $e) {
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             return [
                 'status' => 'error',
                 'error' => $e->getMessage(),
@@ -125,4 +125,4 @@ class EchoNode extends Node
             }
         }
     }
-} 
+}

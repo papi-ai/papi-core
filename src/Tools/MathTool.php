@@ -4,7 +4,7 @@ namespace Papi\Core\Tools;
 
 /**
  * MathTool - Tool for mathematical operations
- * 
+ *
  * Allows AI agents to perform calculations and mathematical operations.
  */
 class MathTool implements ToolInterface
@@ -124,4 +124,4 @@ class MathTool implements ToolInterface
 
         return true;
     }
-} 
+}

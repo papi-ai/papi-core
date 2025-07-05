@@ -66,4 +66,4 @@ abstract class Node
             'config' => $this->config
         ];
     }
-} 
+}

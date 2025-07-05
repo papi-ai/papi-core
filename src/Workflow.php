@@ -4,7 +4,7 @@ namespace Papi\Core;
 
 /**
  * Workflow - Main container for workflow logic
- * 
+ *
  * A workflow is a collection of nodes connected by connections
  * that can be executed to perform automated tasks.
  */
@@ -69,7 +69,9 @@ class Workflow
         while (!empty($currentNodes)) {
             $nextNodes = [];
             foreach ($currentNodes as $nodeId) {
-                if (isset($visited[$nodeId])) continue;
+                if (isset($visited[$nodeId])) {
+                    continue;
+                }
                 $node = $this->nodes[$nodeId];
                 $nodeInput = $lastOutput;
                 // Use output from previous node if available
@@ -168,4 +170,4 @@ class Workflow
     {
         return $this->connections;
     }
-} 
+}

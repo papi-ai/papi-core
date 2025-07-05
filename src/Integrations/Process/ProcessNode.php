@@ -6,7 +6,7 @@ use Papi\Core\Node;
 
 /**
  * ProcessNode - Node for data transformation and processing
- * 
+ *
  * Supports various data operations like extraction, transformation,
  * filtering, and aggregation.
  */
@@ -20,9 +20,9 @@ class ProcessNode extends Node
     {
         $config = $this->config;
         $operations = $config['operations'] ?? [];
-        
+
         $startTime = microtime(true);
-        
+
         try {
             $result = $this->processData($input, $operations);
             $duration = (microtime(true) - $startTime) * 1000;
@@ -34,7 +34,7 @@ class ProcessNode extends Node
             ];
         } catch (\Exception $e) {
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             return [
                 'status' => 'error',
                 'error' => $e->getMessage(),
@@ -51,11 +51,11 @@ class ProcessNode extends Node
     private function processData(array $input, array $operations): array
     {
         $result = [];
-        
+
         foreach ($operations as $key => $operation) {
             $result[$key] = $this->executeOperation($input, $operation);
         }
-        
+
         return $result;
     }
 
@@ -69,12 +69,12 @@ class ProcessNode extends Node
             $path = substr($operation, 5); // Remove 'data.'
             return $this->getNestedValue($input, $path);
         }
-        
+
         // Handle simple PHP expressions
         if (strpos($operation, 'strlen(') === 0 || strpos($operation, 'substr(') === 0) {
             return $this->evaluateExpression($input, $operation);
         }
-        
+
         // Default: return the operation as-is
         return $operation;
     }
@@ -86,14 +86,14 @@ class ProcessNode extends Node
     {
         $keys = explode('.', $path);
         $current = $data;
-        
+
         foreach ($keys as $key) {
             if (!is_array($current) || !array_key_exists($key, $current)) {
                 return null;
             }
             $current = $current[$key];
         }
-        
+
         return $current;
     }
 
@@ -118,4 +118,4 @@ class ProcessNode extends Node
         // Otherwise, return null
         return null;
     }
-} 
+}

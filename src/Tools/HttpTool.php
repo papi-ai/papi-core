@@ -4,7 +4,7 @@ namespace Papi\Core\Tools;
 
 /**
  * HttpTool - Tool for making HTTP requests
- * 
+ *
  * Allows AI agents to fetch data from web APIs and services.
  */
 class HttpTool implements ToolInterface
@@ -65,7 +65,7 @@ class HttpTool implements ToolInterface
 
         try {
             $ch = curl_init();
-            
+
             curl_setopt_array($ch, [
                 CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
@@ -82,7 +82,7 @@ class HttpTool implements ToolInterface
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
-            
+
             curl_close($ch);
 
             if ($error) {
@@ -154,4 +154,4 @@ class HttpTool implements ToolInterface
         }
         return $formatted;
     }
-} 
+}

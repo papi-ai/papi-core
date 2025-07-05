@@ -6,7 +6,7 @@ use Papi\Core\Node;
 
 /**
  * HttpNode - Node for making HTTP requests
- * 
+ *
  * Supports GET, POST, PUT, DELETE requests with configurable
  * headers, body, and authentication.
  */
@@ -29,7 +29,7 @@ class HttpNode extends Node
         }
 
         $startTime = microtime(true);
-        
+
         try {
             $response = $this->makeHttpRequest($method, $url, $headers, $body);
             $duration = (microtime(true) - $startTime) * 1000;
@@ -41,7 +41,7 @@ class HttpNode extends Node
             ];
         } catch (\Exception $e) {
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             return [
                 'status' => 'error',
                 'error' => $e->getMessage(),
@@ -58,7 +58,7 @@ class HttpNode extends Node
     private function makeHttpRequest(string $method, string $url, array $headers = [], $body = null): array
     {
         $ch = curl_init();
-        
+
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -75,7 +75,7 @@ class HttpNode extends Node
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
-        
+
         curl_close($ch);
 
         if ($error) {
@@ -111,4 +111,4 @@ class HttpNode extends Node
         }
         return $formatted;
     }
-} 
+}

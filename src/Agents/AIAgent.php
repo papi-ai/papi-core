@@ -8,7 +8,7 @@ use Papi\Core\Integrations\OpenAIClient;
 
 /**
  * AIAgent - AI-powered workflow node
- * 
+ *
  * An AI agent that can call LLMs and execute tools to perform
  * complex tasks within a workflow.
  */
@@ -28,19 +28,19 @@ class AIAgent extends Node
     public function execute(array $input): array
     {
         $startTime = microtime(true);
-        
+
         try {
             // Prepare the context for the AI
             $context = $this->buildContext($input);
-            
+
             // Call the LLM
             $response = $this->callLLM($context);
-            
+
             // Process any tool calls
             $result = $this->processToolCalls($response, $input);
-            
+
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             return [
                 'status' => 'success',
                 'data' => $result,
@@ -50,7 +50,7 @@ class AIAgent extends Node
             ];
         } catch (\Exception $e) {
             $duration = (microtime(true) - $startTime) * 1000;
-            
+
             return [
                 'status' => 'error',
                 'error' => $e->getMessage(),
@@ -97,14 +97,14 @@ class AIAgent extends Node
 
     /**
      * Build the context for the LLM call
-     * 
+     *
      * @param array<string, mixed> $input
      * @return array<string, mixed>
      */
     private function buildContext(array $input): array
     {
         $messages = [];
-        
+
         // Add system prompt
         if (!empty($this->systemPrompt)) {
             $messages[] = [
@@ -112,18 +112,18 @@ class AIAgent extends Node
                 'content' => $this->systemPrompt
             ];
         }
-        
+
         // Add conversation history from memory
         foreach ($this->memory as $memoryItem) {
             $messages[] = $memoryItem;
         }
-        
+
         // Add current input
         $messages[] = [
             'role' => 'user',
             'content' => $this->formatInput($input)
         ];
-        
+
         return [
             'model' => $this->model,
             'messages' => $messages,
@@ -134,7 +134,7 @@ class AIAgent extends Node
 
     /**
      * Format input for the LLM
-     * 
+     *
      * @param array<string, mixed> $input
      */
     private function formatInput(array $input): string
@@ -151,7 +151,7 @@ class AIAgent extends Node
 
     /**
      * Format tools for the LLM
-     * 
+     *
      * @return array<int, array<string, mixed>>
      */
     private function formatTools(): array
@@ -159,7 +159,7 @@ class AIAgent extends Node
         $tools = [];
         foreach ($this->tools as $tool) {
             $parameters = $tool->getParameters();
-            $required = array_keys(array_filter($parameters, function(array $p): bool {
+            $required = array_keys(array_filter($parameters, function (array $p): bool {
                 return isset($p['required']) && $p['required'] === true;
             }));
             $paramSchema = [
@@ -183,7 +183,7 @@ class AIAgent extends Node
 
     /**
      * Call the LLM (uses OpenAI client if set, otherwise mock)
-     * 
+     *
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
@@ -211,7 +211,7 @@ class AIAgent extends Node
 
     /**
      * Process any tool calls from the LLM response
-     * 
+     *
      * @param array<string, mixed> $response
      * @param array<string, mixed> $input
      * @return array<string, mixed>
@@ -261,7 +261,7 @@ class AIAgent extends Node
 
     /**
      * Find a tool by name
-     * 
+     *
      * @param string $name
      */
     private function findTool(string $name): ?ToolInterface
@@ -294,4 +294,4 @@ class AIAgent extends Node
         $this->memory = [];
         return $this;
     }
-} 
+}

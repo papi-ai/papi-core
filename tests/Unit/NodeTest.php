@@ -11,8 +11,11 @@ class NodeTest extends TestCase
 {
     public function testNodePropertiesAndMethods(): void
     {
-        $node = new class('test-node', 'Test Node') extends Node {
-            public function execute(array $input): array { return ['executed' => true, 'input' => $input]; }
+        $node = new class ('test-node', 'Test Node') extends Node {
+            public function execute(array $input): array
+            {
+                return ['executed' => true, 'input' => $input];
+            }
         };
 
         $this->assertSame('test-node', $node->getId());
@@ -29,4 +32,4 @@ class NodeTest extends TestCase
         $this->assertSame([], $node->getInputSchema());
         $this->assertSame([], $node->getOutputSchema());
     }
-} 
+}

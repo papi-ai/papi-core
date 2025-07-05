@@ -4,7 +4,7 @@ namespace Papi\Core;
 
 /**
  * Connection - Links nodes in a workflow
- * 
+ *
  * A connection defines how data flows from one node to another
  * in a workflow execution.
  */
@@ -73,4 +73,4 @@ class Connection
             'transform' => $this->transform
         ];
     }
-} 
+}

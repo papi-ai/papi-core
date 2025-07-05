@@ -4,7 +4,7 @@ namespace Papi\Core;
 
 /**
  * Execution - Represents the result of a workflow execution
- * 
+ *
  * Contains information about the execution status, input/output data,
  * and results from individual nodes.
  */
@@ -124,4 +124,4 @@ class Execution
             'duration' => $this->getDuration()
         ];
     }
-} 
+}

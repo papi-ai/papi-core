@@ -8,7 +8,7 @@ coverage/
 # PHPStan
 /phpstan.cache
 
-
+.phpunit.result.cache/
 
 # IDE
 .idea/
