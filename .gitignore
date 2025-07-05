@@ -18,4 +18,5 @@ coverage/
 .DS_Store
 
 # Logs
-*.log 
+*.log
+.phpstan/
