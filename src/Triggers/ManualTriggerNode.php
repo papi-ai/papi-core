@@ -4,7 +4,7 @@ namespace Papi\Core\Triggers;
 
 /**
  * Manual Trigger Node
- * 
+ *
  * Handles manual workflow triggers and outputs structured query data.
  * Used for workflows triggered by manual user input.
  */
@@ -14,12 +14,12 @@ class ManualTriggerNode extends BaseTriggerNode
     {
         return 'manual';
     }
-    
+
     protected function processTrigger(): array
     {
         $query = $this->triggerConfig['query'] ?? '';
         $user = $this->triggerConfig['user'] ?? 'unknown';
-        
+
         return [
             'type' => 'manual_trigger',
             'query' => $query,
@@ -31,13 +31,13 @@ class ManualTriggerNode extends BaseTriggerNode
             ]
         ];
     }
-    
+
     public function validateConfiguration(): bool
     {
         // Manual triggers can have empty configuration
         return true;
     }
-    
+
     public function toArray(): array
     {
         return [
@@ -47,4 +47,4 @@ class ManualTriggerNode extends BaseTriggerNode
             'trigger_type' => $this->getTriggerType()
         ];
     }
-} 
+}

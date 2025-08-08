@@ -7,7 +7,7 @@ namespace Papi\Core\Integrations;
  *
  * Provides a contract for making calls to OpenAI's API,
  * allowing for both real and mock implementations.
- * 
+ *
  * @deprecated Use LLMClientInterface instead for better abstraction
  */
 interface OpenAIClient extends LLMClientInterface

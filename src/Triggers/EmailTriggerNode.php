@@ -4,7 +4,7 @@ namespace Papi\Core\Triggers;
 
 /**
  * Email Trigger Node
- * 
+ *
  * Listens for email notifications and outputs structured email data.
  * Used for workflows triggered by email events.
  */
@@ -14,14 +14,14 @@ class EmailTriggerNode extends BaseTriggerNode
     {
         return 'email';
     }
-    
+
     protected function processTrigger(): array
     {
         $subject = $this->triggerConfig['subject'] ?? '';
         $body = $this->triggerConfig['body'] ?? '';
         $sender = $this->triggerConfig['sender'] ?? '';
         $recipients = $this->triggerConfig['recipients'] ?? [];
-        
+
         return [
             'type' => 'email',
             'subject' => $subject,
@@ -35,16 +35,16 @@ class EmailTriggerNode extends BaseTriggerNode
             ]
         ];
     }
-    
+
     public function validateConfiguration(): bool
     {
         if (empty($this->triggerConfig['subject']) && empty($this->triggerConfig['body'])) {
             throw new \InvalidArgumentException('Email trigger requires subject or body');
         }
-        
+
         return true;
     }
-    
+
     public function toArray(): array
     {
         return [
@@ -54,4 +54,4 @@ class EmailTriggerNode extends BaseTriggerNode
             'trigger_type' => $this->getTriggerType()
         ];
     }
-} 
+}

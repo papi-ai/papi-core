@@ -10,7 +10,7 @@ use Papi\Core\Triggers\ChatTriggerNode;
 class ChatTriggerNodeTest extends TestCase
 {
     use ProphecyTrait;
-    
+
     #[Test]
     public function it_should_create_chat_trigger_with_valid_configuration()
     {
@@ -20,10 +20,10 @@ class ChatTriggerNodeTest extends TestCase
             'sender' => 'user123',
             'channel' => 'support'
         ];
-        
+
         // Act
         $trigger = new ChatTriggerNode('test', 'Test Chat Trigger', $config);
-        
+
         // Assert
         $this->assertEquals('chat', $trigger->getTriggerType());
         $this->assertTrue($trigger->isReady());
@@ -35,7 +35,7 @@ class ChatTriggerNodeTest extends TestCase
         // Act & Assert
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Chat trigger requires a message');
-        
+
         new ChatTriggerNode('test', 'Test Chat Trigger', []);
     }
 
@@ -48,12 +48,12 @@ class ChatTriggerNodeTest extends TestCase
             'sender' => 'user123',
             'channel' => 'general'
         ];
-        
+
         $trigger = new ChatTriggerNode('test', 'Test Chat Trigger', $config);
-        
+
         // Act
         $output = $trigger->execute();
-        
+
         // Assert
         $this->assertEquals('chat_message', $output['type']);
         $this->assertEquals('Hello world', $output['content']);
@@ -62,4 +62,4 @@ class ChatTriggerNodeTest extends TestCase
         $this->assertArrayHasKey('timestamp', $output);
         $this->assertArrayHasKey('metadata', $output);
     }
-} 
+}

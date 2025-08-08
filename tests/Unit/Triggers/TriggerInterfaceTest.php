@@ -11,13 +11,13 @@ use Papi\Core\Triggers\BaseTriggerNode;
 class TriggerInterfaceTest extends TestCase
 {
     use ProphecyTrait;
-    
+
     #[Test]
     public function it_should_define_trigger_interface_methods()
     {
         // Arrange
         $trigger = $this->prophesize(TriggerInterface::class);
-        
+
         // Act & Assert - Verify interface methods exist
         $this->assertTrue(method_exists($trigger->reveal(), 'validateConfiguration'));
         $this->assertTrue(method_exists($trigger->reveal(), 'getTriggerType'));
@@ -29,11 +29,11 @@ class TriggerInterfaceTest extends TestCase
     {
         // Arrange
         $trigger = new TestTriggerNode('test', 'Test Trigger');
-        
+
         // Act & Assert
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Trigger nodes do not accept input');
-        
+
         $trigger->execute(['some' => 'input']);
     }
 }
@@ -45,12 +45,12 @@ class TestTriggerNode extends BaseTriggerNode
     {
         return 'test';
     }
-    
+
     protected function processTrigger(): array
     {
         return ['type' => 'test_trigger'];
     }
-    
+
     public function toArray(): array
     {
         return [
@@ -59,4 +59,4 @@ class TestTriggerNode extends BaseTriggerNode
             'type' => 'test_trigger'
         ];
     }
-} 
+}

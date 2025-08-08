@@ -6,7 +6,7 @@ use Papi\Core\Nodes\Node;
 
 /**
  * Output Node
- * 
+ *
  * Formats and outputs workflow data in various formats (JSON, XML, text, array).
  * Serves as an end node for workflows to format and display results.
  */
@@ -15,7 +15,7 @@ class Output implements Node
     private string $id;
     private string $name;
     private array $config;
-    
+
     public function __construct(string $id, string $name, array $config = [])
     {
         $this->id = $id;
@@ -26,7 +26,7 @@ class Output implements Node
             'include_metadata' => true
         ], $config);
     }
-    
+
     public function execute(array $input): array
     {
         $format = $this->config['format'] ?? 'json';
@@ -44,7 +44,7 @@ class Output implements Node
                 'data' => $output,
                 'duration' => round($duration, 2)
             ];
-            
+
             if ($includeMetadata) {
                 $result['metadata'] = [
                     'node_type' => 'output',
@@ -69,17 +69,17 @@ class Output implements Node
             ];
         }
     }
-    
+
     public function getId(): string
     {
         return $this->id;
     }
-    
+
     public function getName(): string
     {
         return $this->name;
     }
-    
+
     public function toArray(): array
     {
         return [
@@ -91,7 +91,7 @@ class Output implements Node
             'include_metadata' => $this->config['include_metadata'] ?? true
         ];
     }
-    
+
     /**
      * @param array<string, mixed> $input
      */
@@ -160,7 +160,7 @@ class Output implements Node
         }
         return trim($output);
     }
-    
+
     /**
      * @param array<string, mixed> $input
      */
@@ -169,18 +169,18 @@ class Output implements Node
         if (empty($input)) {
             return '';
         }
-        
+
         // Handle flat arrays
         if (!is_array(reset($input))) {
             $headers = array_keys($input);
             $values = array_values($input);
             return implode(',', $headers) . "\n" . implode(',', $values);
         }
-        
+
         // Handle arrays of arrays
         $headers = array_keys(reset($input));
         $csv = implode(',', $headers) . "\n";
-        
+
         foreach ($input as $row) {
             $values = [];
             foreach ($headers as $header) {
@@ -188,7 +188,7 @@ class Output implements Node
             }
             $csv .= implode(',', $values) . "\n";
         }
-        
+
         return trim($csv);
     }
 
@@ -206,4 +206,4 @@ class Output implements Node
             }
         }
     }
-} 
+}

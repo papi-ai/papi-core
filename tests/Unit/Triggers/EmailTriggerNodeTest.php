@@ -10,7 +10,7 @@ use Papi\Core\Triggers\EmailTriggerNode;
 class EmailTriggerNodeTest extends TestCase
 {
     use ProphecyTrait;
-    
+
     #[Test]
     public function it_should_create_email_trigger_with_valid_configuration()
     {
@@ -21,10 +21,10 @@ class EmailTriggerNodeTest extends TestCase
             'sender' => 'noreply@example.com',
             'recipients' => ['support@example.com']
         ];
-        
+
         // Act
         $trigger = new EmailTriggerNode('test', 'Test Email Trigger', $config);
-        
+
         // Assert
         $this->assertEquals('email', $trigger->getTriggerType());
         $this->assertTrue($trigger->isReady());
@@ -36,7 +36,7 @@ class EmailTriggerNodeTest extends TestCase
         // Act & Assert
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Email trigger requires subject or body');
-        
+
         new EmailTriggerNode('test', 'Test Email Trigger', []);
     }
 
@@ -50,12 +50,12 @@ class EmailTriggerNodeTest extends TestCase
             'sender' => 'sender@example.com',
             'recipients' => ['recipient@example.com']
         ];
-        
+
         $trigger = new EmailTriggerNode('test', 'Test Email Trigger', $config);
-        
+
         // Act
         $output = $trigger->execute();
-        
+
         // Assert
         $this->assertEquals('email', $output['type']);
         $this->assertEquals('Test Subject', $output['subject']);
@@ -65,4 +65,4 @@ class EmailTriggerNodeTest extends TestCase
         $this->assertArrayHasKey('timestamp', $output);
         $this->assertArrayHasKey('metadata', $output);
     }
-} 
+}

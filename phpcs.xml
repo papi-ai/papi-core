@@ -13,6 +13,16 @@
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/coverage/*</exclude-pattern>
 
+    <!-- Allow descriptive test method names in test files -->
+    <rule ref="PSR1.Methods.CamelCapsMethodName">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Allow multiple classes in test files -->
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+
     <!-- Show progress -->
     <arg value="p"/>
 

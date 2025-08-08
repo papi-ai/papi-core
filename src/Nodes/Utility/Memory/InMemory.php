@@ -7,7 +7,7 @@ use Papi\Core\Nodes\Memory;
 
 /**
  * InMemory Node
- * 
+ *
  * Provides in-memory storage for conversation context.
  * Can be used as memory by AI agents.
  */
@@ -17,7 +17,7 @@ class InMemory implements Node, Memory
     private string $name;
     private array $messages = [];
     private array $config;
-    
+
     public function __construct(string $id, string $name, array $config = [])
     {
         $this->id = $id;
@@ -27,12 +27,12 @@ class InMemory implements Node, Memory
             'max_tokens' => 4000,
         ], $config);
     }
-    
+
     public function execute(array $input): array
     {
         // Handle memory operations through execute
         $operation = $input['operation'] ?? 'get_context';
-        
+
         return match ($operation) {
             'get_context' => ['context' => $this->getContext()],
             'get_messages' => ['messages' => $this->getMessages()],
@@ -40,17 +40,17 @@ class InMemory implements Node, Memory
             default => throw new \InvalidArgumentException("Unknown operation: {$operation}")
         };
     }
-    
+
     public function getId(): string
     {
         return $this->id;
     }
-    
+
     public function getName(): string
     {
         return $this->name;
     }
-    
+
     public function addMessage(string $role, string $content, array $metadata = []): void
     {
         $message = [
@@ -59,11 +59,11 @@ class InMemory implements Node, Memory
             'timestamp' => time(),
             'metadata' => $metadata,
         ];
-        
+
         $this->messages[] = $message;
         $this->applyRetentionPolicy();
     }
-    
+
     public function getMessages(?int $limit = null): array
     {
         $messages = $this->messages;
@@ -72,35 +72,35 @@ class InMemory implements Node, Memory
         }
         return $messages;
     }
-    
+
     public function clear(): void
     {
         $this->messages = [];
     }
-    
+
     public function getContext(int $maxTokens = 4000): array
     {
         $maxTokens = $maxTokens ?: $this->config['max_tokens'];
         $messages = $this->messages;
         $totalTokens = 0;
         $contextMessages = [];
-        
+
         // Start from most recent messages
         for ($i = count($messages) - 1; $i >= 0; $i--) {
             $message = $messages[$i];
             $estimatedTokens = (int) ceil(strlen($message['content']) / 4);
-            
+
             if ($totalTokens + $estimatedTokens > $maxTokens) {
                 break;
             }
-            
+
             array_unshift($contextMessages, $message);
             $totalTokens += $estimatedTokens;
         }
-        
+
         return $contextMessages;
     }
-    
+
     private function applyRetentionPolicy(): void
     {
         $maxMessages = (int) $this->config['max_messages'];
@@ -108,13 +108,13 @@ class InMemory implements Node, Memory
             $this->messages = array_slice($this->messages, -$maxMessages);
         }
     }
-    
+
     private function clearAndReturn(): array
     {
         $this->clear();
         return ['status' => 'cleared'];
     }
-    
+
     public function toArray(): array
     {
         return [
@@ -126,4 +126,4 @@ class InMemory implements Node, Memory
             'max_tokens' => $this->config['max_tokens']
         ];
     }
-} 
+}

@@ -29,28 +29,28 @@ class WorkflowTest extends TestCase
         $node = new class ('test-node', 'Test Node') implements Node {
             private string $id;
             private string $name;
-            
+
             public function __construct(string $id, string $name)
             {
                 $this->id = $id;
                 $this->name = $name;
             }
-            
+
             public function execute(array $input): array
             {
                 return ['result' => 'test'];
             }
-            
+
             public function getId(): string
             {
                 return $this->id;
             }
-            
+
             public function getName(): string
             {
                 return $this->name;
             }
-            
+
             public function toArray(): array
             {
                 return [
@@ -86,28 +86,28 @@ class WorkflowTest extends TestCase
         $node = new class ('test-node', 'Test Node') implements Node {
             private string $id;
             private string $name;
-            
+
             public function __construct(string $id, string $name)
             {
                 $this->id = $id;
                 $this->name = $name;
             }
-            
+
             public function execute(array $input): array
             {
                 return ['result' => 'test'];
             }
-            
+
             public function getId(): string
             {
                 return $this->id;
             }
-            
+
             public function getName(): string
             {
                 return $this->name;
             }
-            
+
             public function toArray(): array
             {
                 return [

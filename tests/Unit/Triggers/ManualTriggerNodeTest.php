@@ -10,7 +10,7 @@ use Papi\Core\Triggers\ManualTriggerNode;
 class ManualTriggerNodeTest extends TestCase
 {
     use ProphecyTrait;
-    
+
     #[Test]
     public function it_should_create_manual_trigger_with_valid_configuration()
     {
@@ -19,10 +19,10 @@ class ManualTriggerNodeTest extends TestCase
             'query' => 'Process this data',
             'user' => 'admin'
         ];
-        
+
         // Act
         $trigger = new ManualTriggerNode('test', 'Test Manual Trigger', $config);
-        
+
         // Assert
         $this->assertEquals('manual', $trigger->getTriggerType());
         $this->assertTrue($trigger->isReady());
@@ -33,7 +33,7 @@ class ManualTriggerNodeTest extends TestCase
     {
         // Act
         $trigger = new ManualTriggerNode('test', 'Test Manual Trigger', []);
-        
+
         // Assert
         $this->assertEquals('manual', $trigger->getTriggerType());
         $this->assertTrue($trigger->isReady());
@@ -47,12 +47,12 @@ class ManualTriggerNodeTest extends TestCase
             'query' => 'Test query',
             'user' => 'testuser'
         ];
-        
+
         $trigger = new ManualTriggerNode('test', 'Test Manual Trigger', $config);
-        
+
         // Act
         $output = $trigger->execute();
-        
+
         // Assert
         $this->assertEquals('manual_trigger', $output['type']);
         $this->assertEquals('Test query', $output['query']);
@@ -60,4 +60,4 @@ class ManualTriggerNodeTest extends TestCase
         $this->assertArrayHasKey('timestamp', $output);
         $this->assertArrayHasKey('metadata', $output);
     }
-} 
+}

@@ -4,7 +4,7 @@ namespace Papi\Core\Integrations;
 
 /**
  * Mock OpenAI Client for Testing
- * 
+ *
  * Mock implementation of OpenAIClient interface for testing purposes.
  * Returns predefined responses without making actual API calls.
  */
@@ -12,17 +12,17 @@ class MockOpenAIClient implements OpenAIClient
 {
     private array $responses = [];
     private bool $echoInput = true;
-    
+
     public function __construct(array $responses = [], bool $echoInput = true)
     {
         $this->responses = $responses;
         $this->echoInput = $echoInput;
     }
-    
+
     public function chat(array $context): array
     {
         $userMessage = $this->extractUserMessage($context);
-        
+
         if (isset($this->responses[$userMessage])) {
             $response = $this->responses[$userMessage];
         } elseif ($this->echoInput) {
@@ -30,7 +30,7 @@ class MockOpenAIClient implements OpenAIClient
         } else {
             $response = 'Mock response for: ' . $userMessage;
         }
-        
+
         return [
             'choices' => [
                 [
@@ -48,32 +48,32 @@ class MockOpenAIClient implements OpenAIClient
             ]
         ];
     }
-    
+
     private function extractUserMessage(array $context): string
     {
         $messages = $context['messages'] ?? [];
-        
+
         foreach ($messages as $message) {
             if ($message['role'] === 'user') {
                 return $message['content'];
             }
         }
-        
+
         return '';
     }
-    
+
     public function setResponses(array $responses): self
     {
         $this->responses = $responses;
         return $this;
     }
-    
+
     public function setEchoInput(bool $echoInput): self
     {
         $this->echoInput = $echoInput;
         return $this;
     }
-    
+
     public function getSupportedModels(): array
     {
         return [
@@ -82,14 +82,14 @@ class MockOpenAIClient implements OpenAIClient
             'mock-model'
         ];
     }
-    
+
     public function getProviderName(): string
     {
         return 'mock-openai';
     }
-    
+
     public function supportsToolCalling(): bool
     {
         return true;
     }
-} 
+}

@@ -9,7 +9,7 @@ use Papi\Core\Integrations\LLMClientInterface;
 
 /**
  * AI Agent Node
- * 
+ *
  * An AI agent that can use tools and memory through interface-based nodes.
  */
 class AIAgent implements Node
@@ -23,36 +23,36 @@ class AIAgent implements Node
     private array $toolNodes = [];
     private ?Node $memoryNode = null;
     private ?LLMClientInterface $llmClient = null;
-    
+
     public function __construct(string $id, string $name, array $config = [])
     {
         $this->id = $id;
         $this->name = $name;
         $this->configure($config);
     }
-    
+
     public function execute(array $input): array
     {
         $query = $this->extractQuery($input);
-        
+
         // Get memory context if available
         $context = [];
         if ($this->memoryNode instanceof Memory) {
             $context = $this->memoryNode->getContext();
         }
-        
+
         // Build tool schemas for AI
         $tools = $this->buildToolSchemas();
-        
+
         // Generate response
         $response = $this->generateResponse($query, $context, $tools);
-        
+
         // Add messages to memory if available
         if ($this->memoryNode instanceof Memory) {
             $this->memoryNode->addMessage('user', $query);
             $this->memoryNode->addMessage('assistant', $response);
         }
-        
+
         return [
             'response' => $response,
             'model' => $this->model,
@@ -64,17 +64,17 @@ class AIAgent implements Node
             ]
         ];
     }
-    
+
     public function getId(): string
     {
         return $this->id;
     }
-    
+
     public function getName(): string
     {
         return $this->name;
     }
-    
+
     public function addTool(Node $node): self
     {
         if (!$node instanceof Tool) {
@@ -83,7 +83,7 @@ class AIAgent implements Node
         $this->toolNodes[] = $node;
         return $this;
     }
-    
+
     public function setMemory(Node $node): self
     {
         if (!$node instanceof Memory) {
@@ -92,37 +92,37 @@ class AIAgent implements Node
         $this->memoryNode = $node;
         return $this;
     }
-    
+
     public function setModel(string $model): self
     {
         $this->model = $model;
         return $this;
     }
-    
+
     public function setSystemPrompt(string $prompt): self
     {
         $this->systemPrompt = $prompt;
         return $this;
     }
-    
+
     public function setMaxTokens(int $maxTokens): self
     {
         $this->maxTokens = $maxTokens;
         return $this;
     }
-    
+
     public function setTemperature(float $temperature): self
     {
         $this->temperature = $temperature;
         return $this;
     }
-    
+
     public function setLLMClient(LLMClientInterface $client): self
     {
         $this->llmClient = $client;
         return $this;
     }
-    
+
     private function configure(array $config): void
     {
         $this->model = $config['model'] ?? $this->model;
@@ -130,52 +130,52 @@ class AIAgent implements Node
         $this->maxTokens = $config['max_tokens'] ?? $this->maxTokens;
         $this->temperature = $config['temperature'] ?? $this->temperature;
     }
-    
+
     private function extractQuery(array $input): string
     {
         return $input['query'] ?? $input['message'] ?? $input['text'] ?? '';
     }
-    
+
     private function buildToolSchemas(): array
     {
-        return array_map(function(Tool $tool) {
+        return array_map(function (Tool $tool) {
             return $tool->getToolSchema();
         }, $this->toolNodes);
     }
-    
+
     private function generateResponse(string $query, array $context, array $tools): string
     {
         $client = $this->getLLMClient();
-        
+
         $messages = $this->buildMessages($query, $context);
-        
+
         $requestData = [
             'model' => $this->model,
             'messages' => $messages,
             'max_tokens' => $this->maxTokens,
             'temperature' => $this->temperature,
         ];
-        
+
         if (!empty($tools)) {
             $requestData['tools'] = $tools;
         }
-        
+
         $response = $client->chat($requestData);
-        
+
         return $this->extractResponse($response);
     }
-    
+
     private function buildMessages(string $query, array $context): array
     {
         $messages = [];
-        
+
         if (!empty($this->systemPrompt)) {
             $messages[] = [
                 'role' => 'system',
                 'content' => $this->systemPrompt
             ];
         }
-        
+
         // Add context messages
         foreach ($context as $message) {
             $messages[] = [
@@ -183,25 +183,25 @@ class AIAgent implements Node
                 'content' => $message['content']
             ];
         }
-        
+
         // Add current query
         $messages[] = [
             'role' => 'user',
             'content' => $query
         ];
-        
+
         return $messages;
     }
-    
+
     private function extractResponse(array $response): string
     {
         if (isset($response['choices'][0]['message']['content'])) {
             return $response['choices'][0]['message']['content'];
         }
-        
+
         return 'No response generated';
     }
-    
+
     private function getLLMClient(): LLMClientInterface
     {
         if ($this->llmClient === null) {
@@ -209,7 +209,7 @@ class AIAgent implements Node
         }
         return $this->llmClient;
     }
-    
+
     public function toArray(): array
     {
         $client = $this->llmClient;
@@ -218,7 +218,7 @@ class AIAgent implements Node
             'supports_tool_calling' => $client ? $client->supportsToolCalling() : false,
             'supported_models' => $client ? $client->getSupportedModels() : []
         ];
-        
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -232,4 +232,4 @@ class AIAgent implements Node
             'llm_provider' => $providerInfo
         ];
     }
-} 
+}
