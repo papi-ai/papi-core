@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Papi\Core\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Papi\Core\Execution;
 
 class ExecutionTest extends TestCase
 {
-    public function testExecutionCreation(): void
+    #[Test]
+    public function it_creates_an_execution(): void
     {
         $execution = new Execution('workflow-123', 'success', ['input' => 'data']);
 
@@ -20,7 +22,8 @@ class ExecutionTest extends TestCase
         $this->assertEmpty($execution->getNodeResults());
     }
 
-    public function testExecutionOutputData(): void
+    #[Test]
+    public function it_sets_and_gets_output_data(): void
     {
         $execution = new Execution('workflow-123', 'success', []);
         $outputData = ['result' => 'success'];
@@ -30,7 +33,8 @@ class ExecutionTest extends TestCase
         $this->assertSame($outputData, $execution->getOutputData());
     }
 
-    public function testExecutionNodeResults(): void
+    #[Test]
+    public function it_adds_and_gets_node_results(): void
     {
         $execution = new Execution('workflow-123', 'success', []);
         $nodeResult = ['status' => 'success', 'data' => 'test'];
@@ -41,7 +45,8 @@ class ExecutionTest extends TestCase
         $this->assertSame($nodeResult, $execution->getNodeResults()['node1']);
     }
 
-    public function testExecutionErrorMessage(): void
+    #[Test]
+    public function it_sets_and_gets_error_message(): void
     {
         $execution = new Execution('workflow-123', 'error', []);
         $errorMessage = 'Something went wrong';
@@ -51,7 +56,8 @@ class ExecutionTest extends TestCase
         $this->assertSame($errorMessage, $execution->getErrorMessage());
     }
 
-    public function testExecutionCompletion(): void
+    #[Test]
+    public function it_completes_execution_and_sets_completed_at(): void
     {
         $execution = new Execution('workflow-123', 'success', []);
 
@@ -63,7 +69,8 @@ class ExecutionTest extends TestCase
         $this->assertGreaterThan(0, $execution->getDuration());
     }
 
-    public function testExecutionToArray(): void
+    #[Test]
+    public function it_converts_execution_to_array(): void
     {
         $execution = new Execution('workflow-123', 'success', ['input' => 'data']);
         $execution->setOutputData(['output' => 'result']);

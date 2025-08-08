@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Papi\Core\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Papi\Core\Connection;
 
 class ConnectionTest extends TestCase
 {
-    public function testConnectionCreation(): void
+    #[Test]
+    public function it_creates_a_connection(): void
     {
         $connection = new Connection('node1', 'node2');
 
@@ -19,7 +21,8 @@ class ConnectionTest extends TestCase
         $this->assertSame('input', $connection->getTargetInput());
     }
 
-    public function testConnectionWithCustomPorts(): void
+    #[Test]
+    public function it_creates_a_connection_with_custom_ports(): void
     {
         $connection = new Connection('node1', 'node2', 'custom_output', 'custom_input');
 
@@ -29,7 +32,8 @@ class ConnectionTest extends TestCase
         $this->assertSame('custom_input', $connection->getTargetInput());
     }
 
-    public function testConnectionTransform(): void
+    #[Test]
+    public function it_sets_and_gets_transform(): void
     {
         $connection = new Connection('node1', 'node2');
         $transform = ['field' => 'value'];
@@ -38,7 +42,8 @@ class ConnectionTest extends TestCase
         $this->assertSame($transform, $connection->getTransform());
     }
 
-    public function testConnectionToArray(): void
+    #[Test]
+    public function it_converts_connection_to_array(): void
     {
         $connection = new Connection('node1', 'node2', 'output1', 'input1');
         $connection->setTransform(['test' => 'value']);

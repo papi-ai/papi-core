@@ -26,6 +26,8 @@
         "ext-openssl": "*"
     },
     "require-dev": {
+        "phpspec/prophecy": "^1.22",
+        "phpspec/prophecy-phpunit": "^2.4",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^10.0",
         "squizlabs/php_codesniffer": "^3.7"

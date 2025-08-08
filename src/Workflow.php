@@ -2,6 +2,8 @@
 
 namespace Papi\Core;
 
+use Papi\Core\Nodes\Node;
+
 /**
  * Workflow - Main container for workflow logic
  *
