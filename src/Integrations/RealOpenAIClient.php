@@ -70,12 +70,19 @@ class RealOpenAIClient implements OpenAIClient
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new \RuntimeException("cURL request failed: {$error}");
+        }
+        
         curl_close($ch);
         
         if ($httpCode !== 200) {
             throw new \RuntimeException("OpenAI API request failed with HTTP code: {$httpCode}");
         }
         
-        return $response ?: '';
+        return (string) $response;
     }
 } 

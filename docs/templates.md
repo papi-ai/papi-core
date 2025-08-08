@@ -49,35 +49,26 @@ $execution = $workflow->execute(['customer_message' => 'I need help with my orde
 
 use Papi\Core\Workflow;
 use Papi\Core\Connection;
-use Papi\Core\Integrations\Http\HttpNode;
-use Papi\Core\Integrations\Process\ProcessNode;
-use Papi\Core\Integrations\Output\EchoNode;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
 
-function createDataProcessingWorkflow(string $apiUrl, array $transformations): Workflow
+function createDataProcessingWorkflow(string $systemPrompt): Workflow
 {
     $workflow = new Workflow('data_processing_workflow');
     
-    // HTTP node to fetch data
-    $httpNode = new HttpNode('fetch', 'Fetch Data');
-    $httpNode->setConfig([
-        'method' => 'GET',
-        'url' => $apiUrl,
-        'headers' => ['Accept' => 'application/json']
-    ]);
-    
-    // Process node to transform data
-    $processNode = new ProcessNode('process', 'Process Data');
-    $processNode->setConfig(['operations' => $transformations]);
+    // AI agent to process data
+    $aiAgent = new AIAgent('processor', 'Data Processor');
+    $aiAgent->setModel('gpt-3.5-turbo')
+        ->setSystemPrompt($systemPrompt);
     
     // Output node to format results
-    $outputNode = new EchoNode('output', 'Output Results');
-    $outputNode->setConfig([
+    $outputNode = new Output('output', 'Output Results', [
         'format' => 'json',
         'pretty_print' => true
     ]);
     
     // Add nodes and connections
-    $workflow->addNode($httpNode);
+    $workflow->addNode($aiAgent);
     $workflow->addNode($processNode);
     $workflow->addNode($outputNode);
     
@@ -105,10 +96,8 @@ $execution = $workflow->execute();
 
 use Papi\Core\Workflow;
 use Papi\Core\Connection;
-use Papi\Core\Agents\AIAgent;
-use Papi\Core\Tools\HttpTool;
-use Papi\Core\Tools\MathTool;
-use Papi\Core\Integrations\Output\EchoNode;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
 
 function createAIAnalysisWorkflow(string $systemPrompt, array $tools = []): Workflow
 {
@@ -119,18 +108,13 @@ function createAIAnalysisWorkflow(string $systemPrompt, array $tools = []): Work
     $aiAgent->setModel('gpt-4')
         ->setSystemPrompt($systemPrompt);
     
-    // Add default tools
-    $aiAgent->addTool(new HttpTool());
-    $aiAgent->addTool(new MathTool());
-    
     // Add custom tools
     foreach ($tools as $tool) {
         $aiAgent->addTool($tool);
     }
     
     // Output node
-    $outputNode = new EchoNode('output', 'Analysis Results');
-    $outputNode->setConfig([
+    $outputNode = new Output('output', 'Analysis Results', [
         'format' => 'json',
         'pretty_print' => true,
         'include_metadata' => true

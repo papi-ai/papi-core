@@ -6,25 +6,75 @@ Papi supports integration with many external services via workflow nodes. Integr
 
 ### ✅ Currently Implemented
 
-#### HTTP Integration
-Make HTTP requests to external APIs and services.
+#### Custom HTTP Integration
+You can create custom HTTP integrations using cURL within your own nodes or directly in AI agent tools.
 
 ```php
 <?php
 
-use Papi\Core\Integrations\Http\HttpNode;
+use Papi\Core\Nodes\Node;
+use Papi\Core\Nodes\Tool;
 
-$httpNode = new HttpNode('fetch', 'Fetch Data');
-$httpNode->setConfig([
-    'method' => 'GET',
-    'url' => 'https://api.example.com/data',
-    'headers' => [
-        'Authorization' => 'Bearer your-token',
-        'Content-Type' => 'application/json'
-    ]
-]);
+class CustomHttpTool implements Node, Tool
+{
+    private string $id;
+    private string $name;
+    
+    public function __construct(string $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+    
+    public function execute(array $input): array
+    {
+        $url = $input['url'] ?? '';
+        $method = $input['method'] ?? 'GET';
+        $headers = $input['headers'] ?? [];
+        
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return [
+            'status_code' => $httpCode,
+            'response' => $response
+        ];
+    }
+    
+    public function getId(): string { return $this->id; }
+    public function getName(): string { return $this->name; }
+    public function toArray(): array { return ['id' => $this->id, 'name' => $this->name]; }
+    
+    public function getToolSchema(): array
+    {
+        return [
+            'name' => 'http_request',
+            'description' => 'Make HTTP requests to external APIs',
+            'parameters' => [
+                'url' => ['type' => 'string', 'required' => true],
+                'method' => ['type' => 'string', 'enum' => ['GET', 'POST', 'PUT', 'DELETE']],
+                'headers' => ['type' => 'array']
+            ]
+        ];
+    }
+    
+    public function getToolName(): string { return 'http_request'; }
+    public function getToolDescription(): string { return 'Make HTTP requests to external APIs'; }
+}
 
-$workflow->addNode($httpNode);
+// Usage
+$httpTool = new CustomHttpTool('http', 'HTTP Tool');
+$aiAgent->addTool($httpTool);
 ```
 
 **Features:**
@@ -66,10 +116,9 @@ Format and output workflow results.
 ```php
 <?php
 
-use Papi\Core\Integrations\Output\EchoNode;
+use Papi\Core\Nodes\Utility\Output;
 
-$outputNode = new EchoNode('output', 'Output Results');
-$outputNode->setConfig([
+$outputNode = new Output('output', 'Output Results', [
     'format' => 'json',
     'pretty_print' => true,
     'include_metadata' => true
@@ -338,20 +387,28 @@ class SlackNodeTest extends TestCase
 
 ## 🔗 Integration Patterns
 
-### Data Fetching Pattern
+### AI Agent with Custom Tool Pattern
 
 ```php
-// HTTP -> Process -> Output
-$httpNode = new HttpNode('fetch', 'Fetch Data');
-$processNode = new ProcessNode('process', 'Process Data');
-$outputNode = new EchoNode('output', 'Output Results');
+<?php
 
-$workflow->addNode($httpNode);
-$workflow->addNode($processNode);
+// AI Agent -> Custom Tool -> Output
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
+
+$aiAgent = new AIAgent('assistant', 'Data Assistant');
+$aiAgent->setModel('gpt-3.5-turbo')
+    ->addTool(new CustomHttpTool('http', 'HTTP Tool'));
+
+$outputNode = new Output('output', 'Output Results', [
+    'format' => 'json',
+    'pretty_print' => true
+]);
+
+$workflow->addNode($aiAgent);
 $workflow->addNode($outputNode);
 
-$workflow->addConnection(new Connection('fetch', 'process'));
-$workflow->addConnection(new Connection('process', 'output'));
+$workflow->addConnection(new Connection('assistant', 'output'));
 ```
 
 ### Notification Pattern

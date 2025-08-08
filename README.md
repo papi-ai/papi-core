@@ -274,7 +274,6 @@ class Sheets implements Node, Tool, Memory
 <?php
 
 use Papi\Core\Nodes\AI\AIAgent;
-use Papi\Core\Nodes\Utility\Http;
 use Papi\Core\Nodes\Utility\Memory\InMemory;
 
 // Create memory node

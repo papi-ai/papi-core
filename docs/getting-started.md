@@ -15,41 +15,41 @@ composer require papi/papi-core
 Here's how to create and run a simple workflow:
 
 ```php
+<?php
+
 use Papi\Core\Workflow;
-use Papi\Integrations\Http\HttpNode;
-use Papi\Integrations\Process\ProcessNode;
-use Papi\Integrations\Output\EchoNode;
+use Papi\Core\Connection;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
+use Papi\Core\Integrations\MockOpenAIClient;
 
 $workflow = new Workflow('Demo Workflow');
 
-$httpNode = new HttpNode('fetch', 'Fetch Data');
-$httpNode->setConfig([
-    'method' => 'GET',
-    'url' => 'https://jsonplaceholder.typicode.com/posts/1',
-]);
+// Create AI agent for data processing
+$aiAgent = new AIAgent('assistant', 'AI Assistant');
+$aiAgent->setModel('gpt-3.5-turbo')
+    ->setSystemPrompt('You are a helpful assistant that can analyze and summarize data.');
 
-$processNode = new ProcessNode('process', 'Process Data');
-$processNode->setConfig([
-    'operations' => [
-        'extract_title' => 'data.title',
-        'extract_body' => 'data.body',
-    ]
+// Use mock client for testing
+$mockClient = new MockOpenAIClient([
+    'Analyze this data' => 'I have analyzed the data and found it contains important information about user preferences.'
 ]);
+$aiAgent->setLLMClient($mockClient);
 
-$echoNode = new EchoNode('output', 'Output');
-$echoNode->setConfig([
+// Create output node
+$outputNode = new Output('output', 'Output Results', [
     'format' => 'json',
     'pretty_print' => true
 ]);
 
-$workflow->addNode($httpNode);
-$workflow->addNode($processNode);
-$workflow->addNode($echoNode);
-$workflow->addConnection(new \Papi\Core\Connection('fetch', 'process'));
-$workflow->addConnection(new \Papi\Core\Connection('process', 'output'));
+$workflow->addNode($aiAgent);
+$workflow->addNode($outputNode);
+$workflow->addConnection(new Connection('assistant', 'output'));
 
-$execution = $workflow->execute();
-print_r($execution->getOutput());
+$execution = $workflow->execute([
+    'query' => 'Analyze this data'
+]);
+print_r($execution->getOutputData());
 ```
 
 ## Next Steps

@@ -103,7 +103,7 @@ class InMemory implements Node, Memory
     
     private function applyRetentionPolicy(): void
     {
-        $maxMessages = $this->config['max_messages'];
+        $maxMessages = (int) $this->config['max_messages'];
         if (count($this->messages) > $maxMessages) {
             $this->messages = array_slice($this->messages, -$maxMessages);
         }

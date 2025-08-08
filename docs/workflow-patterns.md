@@ -58,58 +58,115 @@ A node or set of nodes will be executed repeatedly for a list of items.
 
 ### Data Fetch and Process Pattern
 ```php
+<?php
+
 use Papi\Core\Workflow;
 use Papi\Core\Connection;
-use Papi\Core\Integrations\Http\HttpNode;
-use Papi\Core\Integrations\Process\ProcessNode;
-use Papi\Core\Integrations\Output\EchoNode;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
+use Papi\Core\Integrations\MockOpenAIClient;
 
 $workflow = new Workflow('Data Processing Workflow');
 
-// Create nodes
-$httpNode = new HttpNode('fetch', 'Fetch Data');
-$httpNode->setConfig([
-    'method' => 'GET',
-    'url' => 'https://api.example.com/data',
-]);
+// Create AI agent for data processing
+$aiAgent = new AIAgent('assistant', 'Data Processor');
+$aiAgent->setModel('gpt-3.5-turbo')
+    ->setSystemPrompt('You are a data processing assistant that can analyze and transform data.');
 
-$processNode = new ProcessNode('process', 'Process Data');
-$processNode->setConfig([
-    'operations' => [
-        'extract_title' => 'data.title',
-        'extract_body' => 'data.body',
-    ]
+// Use mock client for testing
+$mockClient = new MockOpenAIClient([
+    'Process this data' => 'I have processed the data successfully.'
 ]);
+$aiAgent->setLLMClient($mockClient);
 
-$outputNode = new EchoNode('output', 'Output Results');
+// Create output node
+$outputNode = new Output('output', 'Output Results', [
+    'format' => 'json',
+    'pretty_print' => true
+]);
 
 // Add nodes and connections
-$workflow->addNode($httpNode);
-$workflow->addNode($processNode);
+$workflow->addNode($aiAgent);
 $workflow->addNode($outputNode);
 
-$workflow->addConnection(new Connection('fetch', 'process'));
-$workflow->addConnection(new Connection('process', 'output'));
+$workflow->addConnection(new Connection('assistant', 'output'));
 
 // Execute
-$execution = $workflow->execute();
+$execution = $workflow->execute([
+    'query' => 'Process this data'
+]);
 ```
 
-### AI Agent with Tools Pattern
+### AI Agent with Custom Tools Pattern
 ```php
+<?php
+
 use Papi\Core\Workflow;
-use Papi\Core\Agents\AIAgent;
-use Papi\Core\Tools\HttpTool;
-use Papi\Core\Tools\MathTool;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Node;
+use Papi\Core\Nodes\Tool;
+
+// Create a custom calculation tool
+class CalculationTool implements Node, Tool
+{
+    private string $id;
+    private string $name;
+    
+    public function __construct(string $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+    
+    public function execute(array $input): array
+    {
+        $operation = $input['operation'] ?? '';
+        $numbers = $input['numbers'] ?? [];
+        
+        switch ($operation) {
+            case 'add':
+                $result = array_sum($numbers);
+                break;
+            case 'multiply':
+                $result = array_product($numbers);
+                break;
+            case 'sqrt':
+                $result = sqrt($numbers[0] ?? 0);
+                break;
+            default:
+                $result = 0;
+        }
+        
+        return ['result' => $result];
+    }
+    
+    public function getId(): string { return $this->id; }
+    public function getName(): string { return $this->name; }
+    public function toArray(): array { return ['id' => $this->id, 'name' => $this->name]; }
+    
+    public function getToolSchema(): array
+    {
+        return [
+            'name' => 'calculation',
+            'description' => 'Perform mathematical calculations',
+            'parameters' => [
+                'operation' => ['type' => 'string', 'enum' => ['add', 'multiply', 'sqrt']],
+                'numbers' => ['type' => 'array', 'items' => ['type' => 'number']]
+            ]
+        ];
+    }
+    
+    public function getToolName(): string { return 'calculation'; }
+    public function getToolDescription(): string { return 'Perform mathematical calculations'; }
+}
 
 $workflow = new Workflow('AI Agent Workflow');
 
-// Create AI agent with tools
+// Create AI agent with custom tool
 $aiAgent = new AIAgent('assistant', 'AI Assistant');
 $aiAgent->setModel('gpt-3.5-turbo')
-    ->setSystemPrompt('You are a helpful assistant that can use tools.')
-    ->addTool(new HttpTool())
-    ->addTool(new MathTool());
+    ->setSystemPrompt('You are a helpful assistant that can perform calculations.')
+    ->addTool(new CalculationTool('calc', 'Calculator'));
 
 $workflow->addNode($aiAgent);
 

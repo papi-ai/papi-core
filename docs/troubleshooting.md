@@ -17,12 +17,13 @@ Fatal error: Uncaught Error: Call to undefined method addNode()
 **Solution:**
 ```php
 // Ensure proper imports
-use Papi\Core\Integrations\Http\HttpNode;
-use Papi\Core\Integrations\Process\ProcessNode;
-use Papi\Core\Integrations\Output\EchoNode;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Utility\Output;
+use Papi\Core\Integrations\MockOpenAIClient;
 
 // Check node instantiation
-$httpNode = new HttpNode('fetch', 'Fetch Data');
+$aiAgent = new AIAgent('assistant', 'AI Assistant');
+$aiAgent->setLLMClient(new MockOpenAIClient());
 ```
 
 #### Issue: "Connection source/target not found" Error

@@ -43,24 +43,73 @@ echo $result['data']['response'];
 ```php
 <?php
 
-use Papi\Core\Agents\AIAgent;
-use Papi\Core\Tools\HttpTool;
-use Papi\Core\Tools\MathTool;
+use Papi\Core\Nodes\AI\AIAgent;
+use Papi\Core\Nodes\Node;
+use Papi\Core\Nodes\Tool;
+
+// Create a custom calculation tool
+class CalculationTool implements Node, Tool
+{
+    private string $id;
+    private string $name;
+    
+    public function __construct(string $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+    
+    public function execute(array $input): array
+    {
+        $operation = $input['operation'] ?? '';
+        $number = $input['number'] ?? 0;
+        
+        switch ($operation) {
+            case 'square':
+                $result = $number * $number;
+                break;
+            case 'sqrt':
+                $result = sqrt($number);
+                break;
+            default:
+                $result = 0;
+        }
+        
+        return ['result' => $result];
+    }
+    
+    public function getId(): string { return $this->id; }
+    public function getName(): string { return $this->name; }
+    public function toArray(): array { return ['id' => $this->id, 'name' => $this->name]; }
+    
+    public function getToolSchema(): array
+    {
+        return [
+            'name' => 'calculate',
+            'description' => 'Perform mathematical calculations',
+            'parameters' => [
+                'operation' => ['type' => 'string', 'enum' => ['square', 'sqrt']],
+                'number' => ['type' => 'number', 'required' => true]
+            ]
+        ];
+    }
+    
+    public function getToolName(): string { return 'calculate'; }
+    public function getToolDescription(): string { return 'Perform mathematical calculations'; }
+}
 
 // Create tools
-$httpTool = new HttpTool();
-$mathTool = new MathTool();
+$calculationTool = new CalculationTool('calc', 'Calculator');
 
 // Create AI agent with tools
 $aiAgent = new AIAgent('assistant', 'AI Assistant');
 $aiAgent->setModel('gpt-3.5-turbo')
-    ->setSystemPrompt('You are a helpful assistant that can fetch data and perform calculations.')
-    ->addTool($httpTool)
-    ->addTool($mathTool);
+    ->setSystemPrompt('You are a helpful assistant that can perform calculations.')
+    ->addTool($calculationTool);
 
 // The AI agent can now use these tools when needed
 $execution = $workflow->execute([
-    'query' => 'What is the current weather in London and what is 15 squared?'
+    'query' => 'What is 15 squared?'
 ]);
 ```
 
@@ -90,9 +139,9 @@ $aiAgent->setSystemPrompt('You are a customer support agent. Be polite, helpful,
 ### Tool Integration
 
 ```php
-// Add built-in tools
-$aiAgent->addTool(new HttpTool());
-$aiAgent->addTool(new MathTool());
+// Add custom tools
+$aiAgent->addTool(new CalculationTool('calc', 'Calculator'));
+$aiAgent->addTool(new CustomHttpTool('http', 'HTTP Tool'));
 
 // Add custom tools
 $aiAgent->addTool(new CustomTool());
@@ -115,16 +164,14 @@ $aiAgent->addTool($httpTool);
 // "Get weather data for New York"
 ```
 
-#### Math Tool
+#### Custom Calculation Tool
 ```php
-use Papi\Core\Tools\MathTool;
-
-$mathTool = new MathTool();
-$aiAgent->addTool($mathTool);
+$calculationTool = new CalculationTool('calc', 'Calculator');
+$aiAgent->addTool($calculationTool);
 
 // AI can now perform calculations like:
 // "What is the square root of 144?"
-// "Calculate 25 * 13 + 7"
+// "Calculate 15 squared"
 ```
 
 ### Custom Tools
