@@ -14,17 +14,17 @@
 
 Build powerful AI-powered workflows with a modern, extensible PHP engine that supports AI agents, custom tools, and seamless integrations.
 
-## ✨ Features
+## Features
 
-- **🤖 AI Agent Support**: Integrate LLMs (OpenAI, Anthropic) with tool-calling capabilities and memory
-- **🔧 Extensible Tool System**: Create custom tools for AI agents to use
-- **🔌 Integration Framework**: Build nodes for external services and APIs
-- **⚡ Modern Workflow Engine**: Compose, execute, and extend workflows with nodes and connections
-- **🚀 Trigger System**: Event-driven workflow initiation with chat, email, and manual triggers
-- **🏗️ Framework Agnostic**: Use standalone or with Laravel/Symfony bundles
-- **🧪 Testing Ready**: Comprehensive testing utilities and mock clients
+- **AI Agent Support**: Integrate LLMs (OpenAI, Anthropic) with tool-calling capabilities and memory
+- **Extensible Tool System**: Create custom tools for AI agents to use
+- **Integration Framework**: Build nodes for external services and APIs
+- **Modern Workflow Engine**: Compose, execute, and extend workflows with nodes and connections
+- **Trigger System**: Event-driven workflow initiation with chat, email, and manual triggers
+- **Framework Agnostic**: Use standalone or with Laravel/Symfony bundles
+- **Testing Ready**: Comprehensive testing utilities and mock clients
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Requirements
 
@@ -158,7 +158,7 @@ $execution = $workflow->execute();
 $result = $execution->getOutputData();
 ```
 
-## 🎯 Provider-Agnostic AI Architecture
+## Provider-Agnostic AI Architecture
 
 Papi Core uses a clean, provider-agnostic architecture that decouples AI agents from specific LLM providers:
 
@@ -201,7 +201,7 @@ $customAgent->setModel('custom-model')
     ->setLLMClient($customClient);
 ```
 
-## 🎯 Interface-Based Node System
+## Interface-Based Node System
 
 Papi Core uses a clean interface-based system where nodes can implement multiple capabilities:
 
@@ -284,7 +284,7 @@ $aiAgent = new AIAgent('assistant', 'AI Assistant');
 $aiAgent->setMemory($memoryNode);  // Type-safe: only Memory nodes
 ```
 
-## 🛠️ Creating Custom Tools
+## Creating Custom Tools
 
 ```php
 <?php
@@ -359,7 +359,7 @@ $weatherTool = new WeatherTool('weather1', 'Weather Tool');
 $aiAgent->addTool($weatherTool);
 ```
 
-## 🚀 Creating Trigger Nodes
+## Creating Trigger Nodes
 
 Triggers are entry points to workflows that can be initiated by external events. Here's how to create a custom trigger:
 
@@ -406,7 +406,7 @@ $webhookTrigger = new WebhookTriggerNode('webhook', 'Webhook Trigger', [
 $workflow->addNode($webhookTrigger);
 ```
 
-## 🔌 Creating Custom Integrations
+## Creating Custom Integrations
 
 Integrations are workflow nodes that connect to external services. Here's how to create a custom integration:
 
@@ -468,9 +468,9 @@ $slackNode->setConfig(['webhook_url' => 'https://hooks.slack.com/...']);
 $workflow->addNode($slackNode);
 ```
 
-## 📚 Documentation
+## Documentation
 
-📖 **[Documentation Index](./docs/index.md)** - Complete documentation overview and navigation
+**[Documentation Index](./docs/index.md)** - Complete documentation overview and navigation
 
 **Getting Started:**
 - **[Getting Started](./docs/getting-started.md)** - Installation and basic usage
@@ -486,7 +486,7 @@ $workflow->addNode($slackNode);
 - **[API Reference](./docs/api-reference.md)** - Complete API documentation
 - **[Troubleshooting](./docs/troubleshooting.md)** - Common issues and debugging techniques
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 
@@ -518,7 +518,7 @@ $output = $execution->getOutputData();
 $nodeResults = $execution->getNodeResults();
 ```
 
-## 🧪 Testing
+## Testing
 
 Papi Core includes comprehensive testing utilities:
 
@@ -536,27 +536,27 @@ $execution = $workflow->execute(['test' => 'data']);
 $this->assertEquals('success', $execution->getStatus());
 ```
 
-## 🚧 Roadmap
+## Roadmap
 
 ### Current Features
-- ✅ Core workflow engine
-- ✅ AI agent support with tool-calling and memory
-- ✅ LLM node for basic text generation
-- ✅ Memory and context management
-- ✅ Basic integrations (Process, Output)
-- ✅ Trigger system (chat, email, manual)
-- ✅ Mock OpenAI client for testing
+- Core workflow engine
+- AI agent support with tool-calling and memory
+- LLM node for basic text generation
+- Memory and context management
+- Basic integrations (Process, Output)
+- Trigger system (chat, email, manual)
+- Mock OpenAI client for testing
 
 ### Planned Features
-- 🔄 Parallel workflow execution
-- 🔄 Conditional workflow logic
-- 🔄 Loop workflows
-- 🔄 Plugin discovery system
-- 🔄 More built-in integrations (Slack, Discord, databases)
-- 🔄 Workflow templates and sharing
-- 🔄 Advanced AI agent features (enhanced memory, context)
+- Parallel workflow execution
+- Conditional workflow logic
+- Loop workflows
+- Plugin discovery system
+- More built-in integrations (Slack, Discord, databases)
+- Workflow templates and sharing
+- Advanced AI agent features (enhanced memory, context)
 
-## 🤝 Community & Support
+## Community & Support
 
 ### Ecosystem Projects
 
@@ -569,24 +569,24 @@ Papi Core is part of the larger [papi-ai](https://github.com/papi-ai) ecosystem:
 
 ### Getting Help
 
-- 📖 [Documentation](./docs/) - Comprehensive guides and API reference
-- 🐛 [Issues](https://github.com/papi-ai/papi-core/issues) - Report bugs and request features
-- 💬 [Discussions](https://github.com/papi-ai/papi-core/discussions) - Ask questions and share ideas
+- [Documentation](./docs/) - Comprehensive guides and API reference
+- [Issues](https://github.com/papi-ai/papi-core/issues) - Report bugs and request features
+- [Discussions](https://github.com/papi-ai/papi-core/discussions) - Ask questions and share ideas
 
 ### Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-- 🐛 Bug reports and feature requests
-- 💻 Code contributions and pull requests
-- 📚 Documentation improvements
-- 🧪 Test coverage additions
+- Bug reports and feature requests
+- Code contributions and pull requests
+- Documentation improvements
+- Test coverage additions
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Inspired by [n8n](https://n8n.io) workflow automation
 - Built with modern PHP practices and standards
