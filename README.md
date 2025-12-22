@@ -1,13 +1,18 @@
-# Papi Core
+# Papi Core (PHP)
 
-A Python library for interacting with LLM providers, starting with Claude.
+A PHP library for interacting with LLM providers, starting with Claude.
+
+## Requirements
+
+- PHP 8.1 or higher
+- Composer
 
 ## Setup
 
 1. Clone the repository.
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   composer install
    ```
 3. Set up your environment variables. Create a `.env` file in the root directory:
    ```
@@ -18,29 +23,28 @@ A Python library for interacting with LLM providers, starting with Claude.
 
 ### Basic Completion with Claude
 
-You can use the `ClaudeProvider` to generate text completions.
+You can use the `Papi\Providers\ClaudeProvider` to generate text completions.
 
-```python
-import os
-from dotenv import load_dotenv
-from papi.providers.claude import ClaudeProvider
+```php
+<?php
 
-# Load environment variables
-load_dotenv()
+require 'vendor/autoload.php';
 
-api_key = os.getenv("ANTHROPIC_API_KEY")
+use Papi\Providers\ClaudeProvider;
 
-# Initialize provider
-provider = ClaudeProvider(api_key=api_key)
+$apiKey = getenv('ANTHROPIC_API_KEY');
 
-# Generate completion
-response = provider.complete(
-    prompt="Hello, Claude!",
-    model="claude-3-opus-20240229",
-    max_tokens=100
-)
+// Initialize provider
+$provider = new ClaudeProvider($apiKey);
 
-print(response)
+// Generate completion
+$response = $provider->complete(
+    prompt: "Hello, Claude!",
+    model: "claude-3-opus-20240229",
+    maxTokens: 100
+);
+
+echo $response;
 ```
 
 ### Running the Demo
@@ -48,5 +52,5 @@ print(response)
 To run the provided example script:
 
 ```bash
-python examples/demo.py
+php examples/demo.php
 ```
