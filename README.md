@@ -1,52 +1,36 @@
 # Papi Core
 
-A Python library for interacting with LLM providers, starting with Claude.
+A PHP library for interacting with LLM providers (Claude, OpenAI).
 
 ## Setup
 
 1. Clone the repository.
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   composer install
    ```
 3. Set up your environment variables. Create a `.env` file in the root directory:
    ```
-   ANTHROPIC_API_KEY=your_api_key_here
+   ANTHROPIC_API_KEY=your_anthropic_key
+   OPENAI_API_KEY=your_openai_key
    ```
 
 ## Usage
 
-### Basic Completion with Claude
+### Basic Usage
 
-You can use the `ClaudeProvider` to generate text completions.
+```php
+use PapiAi\Core\Papi;
 
-```python
-import os
-from dotenv import load_dotenv
-from papi.providers.claude import ClaudeProvider
+$papi = new Papi('claude'); // or 'openai'
 
-# Load environment variables
-load_dotenv()
-
-api_key = os.getenv("ANTHROPIC_API_KEY")
-
-# Initialize provider
-provider = ClaudeProvider(api_key=api_key)
-
-# Generate completion
-response = provider.complete(
-    prompt="Hello, Claude!",
-    model="claude-3-opus-20240229",
-    max_tokens=100
-)
-
-print(response)
+$response = $papi->complete("Hello, AI!");
+echo $response;
 ```
 
-### Running the Demo
+### Switching Providers
 
-To run the provided example script:
-
-```bash
-python examples/demo.py
+```php
+$papi->using('openai');
+$response = $papi->complete("Hello, OpenAI!");
 ```
