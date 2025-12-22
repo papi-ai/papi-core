@@ -1,7 +1,8 @@
 import os
 from anthropic import Anthropic
+from papi.providers.base import LLMProvider
 
-class ClaudeProvider:
+class ClaudeProvider(LLMProvider):
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
