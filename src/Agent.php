@@ -7,11 +7,20 @@ use ReflectionMethod;
 
 class Agent
 {
+    private ?string $provider = null;
+    private ?string $model = null;
     protected array $tools = [];
     protected array $schemas = [];
 
     public function __construct()
     {
+    }
+
+    public function withModel(string $provider, string $model): self
+    {
+        $this->provider = $provider;
+        $this->model = $model;
+        return $this;
     }
 
     public function withTools(array $tools): self
@@ -51,6 +60,16 @@ class Agent
             'name' => $reflection->getShortName(),
             'functions' => $methods,
         ];
+    }
+
+    public function getProvider(): ?string
+    {
+        return $this->provider;
+    }
+
+    public function getModel(): ?string
+    {
+        return $this->model;
     }
     
     public function getTools(): array
