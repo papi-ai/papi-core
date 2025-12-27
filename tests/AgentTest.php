@@ -25,4 +25,24 @@ class AgentTest extends TestCase
         $this->assertEquals('anthropic', $agent->getProvider());
         $this->assertEquals('claude-3-opus', $agent->getModel());
     }
+
+    public function testWithMemory()
+    {
+        $agent = Papi::agent();
+        $agent->withMemory('sliding_window', ['size' => 10]);
+
+        $this->assertEquals('sliding_window', $agent->getMemoryType());
+        $this->assertEquals(['size' => 10], $agent->getMemoryConfig());
+    }
+
+    public function testWithMemoryChaining()
+    {
+        $agent = Papi::agent()
+            ->withModel('openai', 'gpt-4')
+            ->withMemory('sliding_window', ['size' => 5]);
+
+        $this->assertEquals('openai', $agent->getProvider());
+        $this->assertEquals('sliding_window', $agent->getMemoryType());
+        $this->assertEquals(['size' => 5], $agent->getMemoryConfig());
+    }
 }
