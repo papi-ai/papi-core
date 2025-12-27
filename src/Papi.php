@@ -12,4 +12,9 @@ class Papi
     {
         return '0.1.0';
     }
+
+    public static function agent(): Agent
+    {
+        return new Agent();
+    }
 }
