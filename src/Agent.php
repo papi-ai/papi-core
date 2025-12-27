@@ -16,6 +16,9 @@ class Agent
     {
     }
 
+    /**
+     * Configure the LLM model.
+     */
     public function withModel(string $provider, string $model): self
     {
         $this->provider = $provider;
@@ -23,6 +26,9 @@ class Agent
         return $this;
     }
 
+    /**
+     * Register tools for the agent.
+     */
     public function withTools(array $tools): self
     {
         foreach ($tools as $tool) {

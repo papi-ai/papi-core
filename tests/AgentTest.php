@@ -26,6 +26,9 @@ class AgentTest extends TestCase
         $this->assertEquals('claude-3-opus', $agent->getModel());
     }
 
+    /**
+     * Test that tools can be registered and schema is generated.
+     */
     public function testWithToolsAcceptsTools()
     {
         $agent = Papi::agent();
