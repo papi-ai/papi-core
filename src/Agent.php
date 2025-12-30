@@ -5,6 +5,9 @@ namespace PapiAi\Core;
 use ReflectionClass;
 use ReflectionMethod;
 
+/**
+ * Agent class for managing AI interactions.
+ */
 class Agent
 {
     private ?string $provider = null;
