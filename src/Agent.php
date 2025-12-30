@@ -6,7 +6,7 @@ use ReflectionClass;
 use ReflectionMethod;
 
 /**
- * Agent class for managing AI interactions.
+ * Agent class for managing AI interactions and tools.
  */
 class Agent
 {
