@@ -17,6 +17,7 @@ class Agent
 
     public function __construct()
     {
+        // manually resolved conflicts
     }
 
     public function withModel(string $provider, string $model): self

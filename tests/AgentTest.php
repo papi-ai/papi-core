@@ -8,6 +8,7 @@ use PapiAi\Core\Agent;
 
 class AgentTest extends TestCase
 {
+    // manually resolved conflicts
     public function testWithModel()
     {
         $agent = Papi::agent();
