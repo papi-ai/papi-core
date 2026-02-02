@@ -1,6 +1,6 @@
 # PapiAI Core
 
-[![Tests](https://github.com/papi-ai/core/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/papi-ai/core/actions/workflows/tests.yml)
+[![Tests](https://github.com/papi-ai/core/workflows/Tests/badge.svg)](https://github.com/papi-ai/core/actions?query=workflow%3ATests)
 
 A simple but powerful PHP library for building AI agents. Framework-agnostic, type-safe, and designed for real-world applications.
 
