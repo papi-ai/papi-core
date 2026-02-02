@@ -1,5 +1,5 @@
 {
-    "name": "papi-ai/core",
+    "name": "papi-ai/papi-core",
     "description": "Core classes for PapiAI - A simple but powerful PHP library for building AI agents",
     "type": "library",
     "license": "MIT",
