@@ -1,25 +1,28 @@
-# PapiAI Core - Project Wiki
+# PapiAI Project Wiki
 
 ## Project Overview
-PapiAI Core is a framework-agnostic, type-safe PHP 8.2+ library designed to simplify the creation of AI agents. It provides a robust abstraction layer over various LLM providers (currently supporting Anthropic Claude and Google Gemini), enabling developers to build agentic workflows with structured outputs, tool calling, and event-driven streaming without being tied to a specific framework like Laravel or Symfony. The goal is to offer a lightweight yet powerful foundation for integrating AI capabilities into any PHP application.
+PapiAI Core is a professional, type-safe PHP library designed for building robust AI agents. It decouples the agent logic from specific LLM providers, allowing developers to switch between Anthropic (Claude), Google (Gemini), and others with ease. It focuses on developer experience with strict typing (PHP 8.2+), intuitive interfaces for tool calling, and structured data extraction.
+
+## Architecture
+The library is built around a few key components:
+- **Agent**: The main orchestrator that manages context, instructions, and the conversation loop.
+- **Provider**: An interface for LLM backends (e.g., `AnthropicProvider`, `GoogleProvider`).
+- **Tool**: Encapsulates capabilities the agent can use, definable via closures or class attributes.
+- **Schema**: A fluent builder for defining structured output expectations (Zod-like).
 
 ## Roadmap
 
 ### Phase 1: Foundation (Current)
-- [x] Core Agent and Tool architecture
-- [x] Provider abstractions (Anthropic, Google)
-- [x] Type-safe Schema definitions for structured output
-- [x] Event-driven streaming support
-- [x] Basic observability hooks
+- Core architecture (Agent, Provider, Tool, Schema).
+- Support for Anthropic Claude and Google Gemini.
+- Event-driven streaming and observability hooks.
 
 ### Phase 2: Expansion (Next)
-- [ ] OpenAI Provider integration
-- [ ] Conversation History and Memory management
-- [ ] Middleware support for request/response modification
-- [ ] Enhanced error handling and retry mechanisms
+- **OpenAI Integration**: Add support for GPT-4o and o1 models.
+- **Memory Systems**: Abstract persistence layers for conversation history (Redis, SQL).
+- **RAG Support**: Simple interfaces for vector store retrieval.
 
-### Phase 3: Advanced Features
-- [ ] Multi-agent orchestration and delegation
-- [ ] Vector database integration for RAG (Retrieval-Augmented Generation)
-- [ ] CLI tools for scaffolding agents and tools
-- [ ] Pre-built toolkits for common APIs (GitHub, Slack, etc.)
+### Phase 3: Advanced Capabilities
+- **Multi-Agent Systems**: Patterns for agent delegation and collaboration.
+- **Framework Integrations**: Dedicated packages for Laravel and Symfony.
+- **Local LLM Support**: Adapters for Ollama/Llama.cpp.
