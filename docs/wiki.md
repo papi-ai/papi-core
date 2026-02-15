@@ -2,43 +2,37 @@
 
 ## Project Overview
 
-**PapiAI Core** is a robust, type-safe PHP library designed for building AI agents. It provides a unified interface for interacting with various Large Language Models (LLMs) while handling the complexities of tool calling, structured output, and conversation state management.
+PapiAI is a powerful, framework-agnostic PHP library designed for building robust AI agents. It provides a type-safe, fluent interface for interacting with Large Language Models (LLMs) from multiple providers. 
 
-The library is framework-agnostic, meaning it can be dropped into any PHP 8.2+ project, whether it's a standalone script, a Laravel application, or a Symfony microservice.
+At its core, PapiAI abstracts the complexity of different AI APIs, offering a unified way to handle:
+- **Tool Calling:** Define tools as simple functions or class methods.
+- **Structured Output:** Enforce strict JSON schemas on model responses.
+- **Streaming:** Real-time response streaming with event hooks.
+- **Provider Flexibility:** Swap between Anthropic, Google Gemini, and others without rewriting application logic.
 
-### Key Concepts
-
-*   **Agent**: The central orchestrator that manages instructions, tools, and the provider connection.
-*   **Provider**: An abstraction layer for AI models (currently supporting Anthropic and Google Gemini).
-*   **Tool**: Capabilities given to the agent, defined as simple functions or class methods with attributes.
-*   **Schema**: A Zod-like fluent interface for defining structured output requirements.
-*   **Stream**: First-class support for real-time streaming of text and tool execution events.
+Designed for modern PHP (8.2+), PapiAI fits seamlessly into Laravel, Symfony, or standalone scripts, making it the ideal foundation for building chatbots, data extraction pipelines, and autonomous agents.
 
 ## Roadmap
 
-This roadmap outlines the development phases for PapiAI, moving from the current foundational state to a full-featured AI ecosystem.
+### Phase 1: Foundation (Current)
+- [x] Core Agent Architecture (Agent, Tool, Schema)
+- [x] Provider Interfaces
+- [x] Anthropic (Claude) Integration
+- [x] Google (Gemini) Integration
+- [x] Tool Calling & Structured Output
+- [x] Basic Event Streaming
 
-### Phase 1: Foundation (Current Status)
-*   [x] Core `Agent` logic and conversation management.
-*   [x] Provider interfaces for Anthropic (Claude) and Google (Gemini).
-*   [x] Function and Class-based Tool definitions.
-*   [x] Structured output validation using Schemas.
-*   [x] Event-based streaming support.
-*   [x] Basic test suite with Pest.
+### Phase 2: Expansion (Next Up)
+- [ ] **OpenAI Provider:** Full support for GPT-4o and o1 models.
+- [ ] **Memory System:** Built-in conversation history management (short-term & long-term).
+- [ ] **Middleware/Hooks:** Deeper observability for logging and monitoring agent actions.
 
-### Phase 2: Expansion & Integration
-*   [ ] **OpenAI Provider**: Add support for GPT-4o and o1 models.
-*   [ ] **Memory Management**: Implement interfaces for short-term and long-term memory (Redis, Vector DBs).
-*   [ ] **Middleware Pipelines**: Allow intercepting requests/responses for logging, moderation, or modification.
-*   [ ] **Http Client Abstraction**: Decouple from specific HTTP clients to allow deeper customization.
+### Phase 3: Advanced Capabilities
+- [ ] **RAG Support:** Native document loading and vector store integration.
+- [ ] **Multi-Agent Orchestration:** Patterns for agents to communicate and delegate tasks.
+- [ ] **CLI Tool:** Helper commands for generating agents and tools.
 
-### Phase 3: Developer Experience
-*   [ ] **Laravel Bundle**: dedicated service providers, facades, and artisan commands.
-*   [ ] **Symfony Bundle**: Dependency injection configuration and debug toolbar integration.
-*   [ ] **CLI Mode**: Run agents directly from the command line for testing and automation.
-*   [ ] **Documentation Site**: Comprehensive static site with API references and cookbooks.
-
-### Phase 4: Advanced Features
-*   [ ] **Multi-Agent Orchestration**: Patterns for agents to communicate and delegate tasks to one another.
-*   [ ] **Evaluations**: Tools for measuring agent performance and accuracy against test sets.
-*   [ ] **Observability Dashboard**: specialized UI for tracing agent thoughts and tool executions.
+### Phase 4: Ecosystem
+- [ ] **Laravel Bundle:** Dedicated service provider and facades for Laravel.
+- [ ] **Symfony Bundle:** Dependency injection configuration for Symfony.
+- [ ] **Community Plugin System:** Easier sharing of custom tools and providers.
