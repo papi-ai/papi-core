@@ -1,28 +1,44 @@
 # PapiAI Project Wiki
 
 ## Project Overview
-PapiAI Core is a professional, type-safe PHP library designed for building robust AI agents. It decouples the agent logic from specific LLM providers, allowing developers to switch between Anthropic (Claude), Google (Gemini), and others with ease. It focuses on developer experience with strict typing (PHP 8.2+), intuitive interfaces for tool calling, and structured data extraction.
 
-## Architecture
-The library is built around a few key components:
-- **Agent**: The main orchestrator that manages context, instructions, and the conversation loop.
-- **Provider**: An interface for LLM backends (e.g., `AnthropicProvider`, `GoogleProvider`).
-- **Tool**: Encapsulates capabilities the agent can use, definable via closures or class attributes.
-- **Schema**: A fluent builder for defining structured output expectations (Zod-like).
+**PapiAI Core** is a robust, type-safe PHP library designed for building AI agents. It provides a unified interface for interacting with various Large Language Models (LLMs) while handling the complexities of tool calling, structured output, and conversation state management.
+
+The library is framework-agnostic, meaning it can be dropped into any PHP 8.2+ project, whether it's a standalone script, a Laravel application, or a Symfony microservice.
+
+### Key Concepts
+
+*   **Agent**: The central orchestrator that manages instructions, tools, and the provider connection.
+*   **Provider**: An abstraction layer for AI models (currently supporting Anthropic and Google Gemini).
+*   **Tool**: Capabilities given to the agent, defined as simple functions or class methods with attributes.
+*   **Schema**: A Zod-like fluent interface for defining structured output requirements.
+*   **Stream**: First-class support for real-time streaming of text and tool execution events.
 
 ## Roadmap
 
-### Phase 1: Foundation (Current)
-- Core architecture (Agent, Provider, Tool, Schema).
-- Support for Anthropic Claude and Google Gemini.
-- Event-driven streaming and observability hooks.
+This roadmap outlines the development phases for PapiAI, moving from the current foundational state to a full-featured AI ecosystem.
 
-### Phase 2: Expansion (Next)
-- **OpenAI Integration**: Add support for GPT-4o and o1 models.
-- **Memory Systems**: Abstract persistence layers for conversation history (Redis, SQL).
-- **RAG Support**: Simple interfaces for vector store retrieval.
+### Phase 1: Foundation (Current Status)
+*   [x] Core `Agent` logic and conversation management.
+*   [x] Provider interfaces for Anthropic (Claude) and Google (Gemini).
+*   [x] Function and Class-based Tool definitions.
+*   [x] Structured output validation using Schemas.
+*   [x] Event-based streaming support.
+*   [x] Basic test suite with Pest.
 
-### Phase 3: Advanced Capabilities
-- **Multi-Agent Systems**: Patterns for agent delegation and collaboration.
-- **Framework Integrations**: Dedicated packages for Laravel and Symfony.
-- **Local LLM Support**: Adapters for Ollama/Llama.cpp.
+### Phase 2: Expansion & Integration
+*   [ ] **OpenAI Provider**: Add support for GPT-4o and o1 models.
+*   [ ] **Memory Management**: Implement interfaces for short-term and long-term memory (Redis, Vector DBs).
+*   [ ] **Middleware Pipelines**: Allow intercepting requests/responses for logging, moderation, or modification.
+*   [ ] **Http Client Abstraction**: Decouple from specific HTTP clients to allow deeper customization.
+
+### Phase 3: Developer Experience
+*   [ ] **Laravel Bundle**: dedicated service providers, facades, and artisan commands.
+*   [ ] **Symfony Bundle**: Dependency injection configuration and debug toolbar integration.
+*   [ ] **CLI Mode**: Run agents directly from the command line for testing and automation.
+*   [ ] **Documentation Site**: Comprehensive static site with API references and cookbooks.
+
+### Phase 4: Advanced Features
+*   [ ] **Multi-Agent Orchestration**: Patterns for agents to communicate and delegate tasks to one another.
+*   [ ] **Evaluations**: Tools for measuring agent performance and accuracy against test sets.
+*   [ ] **Observability Dashboard**: specialized UI for tracing agent thoughts and tool executions.
