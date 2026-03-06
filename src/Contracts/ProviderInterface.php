@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace PapiAI\Core\Contracts;
 
+use PapiAI\Core\Message;
 use PapiAI\Core\Response;
+use PapiAI\Core\StreamChunk;
 
 interface ProviderInterface
 {
