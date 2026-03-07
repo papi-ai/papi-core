@@ -19,5 +19,6 @@ final class StreamChunk
     public function __construct(
         public readonly string $text,
         public readonly bool $isComplete = false,
-    ) {}
+    ) {
+    }
 }

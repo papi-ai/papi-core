@@ -58,6 +58,7 @@ final class Agent implements AgentInterface
     public function addTool(ToolInterface $tool): self
     {
         $this->tools[$tool->getName()] = $tool;
+
         return $this;
     }
 
@@ -146,13 +147,9 @@ final class Agent implements AgentInterface
         $messages[] = Message::user($prompt);
 
         for ($turn = 0; $turn < $maxTurns; $turn++) {
-            $fullText = '';
-            $toolCalls = [];
-
             // Stream the response
             foreach ($this->provider->stream($messages, $this->getProviderOptions()) as $chunk) {
                 if ($chunk->text !== '') {
-                    $fullText .= $chunk->text;
                     yield StreamEvent::text($chunk->text);
                 }
             }
@@ -163,6 +160,7 @@ final class Agent implements AgentInterface
 
             if (!$response->hasToolCalls()) {
                 yield StreamEvent::done();
+
                 return;
             }
 
@@ -207,7 +205,7 @@ final class Agent implements AgentInterface
 
         if (!empty($this->tools)) {
             $options['tools'] = array_values(array_map(
-                fn(ToolInterface $tool) => $tool->toAnthropic(),
+                fn (ToolInterface $tool) => $tool->toAnthropic(),
                 $this->tools
             ));
         }
@@ -239,6 +237,7 @@ final class Agent implements AgentInterface
             if (isset($this->hooks['onError'])) {
                 ($this->hooks['onError'])($e);
             }
+
             return ['error' => $e->getMessage()];
         }
 
@@ -285,7 +284,7 @@ final class Agent implements AgentInterface
 
         if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidArgumentException(
-                "Failed to parse structured output: " . json_last_error_msg()
+                'Failed to parse structured output: ' . json_last_error_msg()
             );
         }
 

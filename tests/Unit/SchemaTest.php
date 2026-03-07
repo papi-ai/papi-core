@@ -13,7 +13,6 @@
 declare(strict_types=1);
 
 use PapiAI\Core\Schema\Schema;
-use PapiAI\Core\Schema\SchemaType;
 
 describe('Schema', function () {
     describe('string schema', function () {
@@ -234,7 +233,7 @@ describe('Schema', function () {
         it('throws on validation error', function () {
             $schema = Schema::string();
 
-            expect(fn() => $schema->parse(123))->toThrow(InvalidArgumentException::class);
+            expect(fn () => $schema->parse(123))->toThrow(InvalidArgumentException::class);
         });
     });
 

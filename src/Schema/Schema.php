@@ -102,6 +102,7 @@ class Schema
     {
         $schema = new self(SchemaType::Array);
         $schema->items = $items;
+
         return $schema;
     }
 
@@ -134,6 +135,7 @@ class Schema
     {
         $schema = new self(SchemaType::Enum);
         $schema->enumValues = $values;
+
         return $schema;
     }
 
@@ -151,6 +153,7 @@ class Schema
     public function description(string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -160,6 +163,7 @@ class Schema
     public function nullable(): self
     {
         $this->nullable = true;
+
         return $this;
     }
 
@@ -169,6 +173,7 @@ class Schema
     public function optional(): self
     {
         $this->optional = true;
+
         return $this;
     }
 
@@ -179,6 +184,7 @@ class Schema
     {
         $this->default = $value;
         $this->hasDefault = true;
+
         return $this;
     }
 
@@ -192,6 +198,7 @@ class Schema
         } else {
             $this->min = $value;
         }
+
         return $this;
     }
 
@@ -205,6 +212,7 @@ class Schema
         } else {
             $this->max = $value;
         }
+
         return $this;
     }
 
@@ -214,6 +222,7 @@ class Schema
     public function pattern(string $pattern): self
     {
         $this->pattern = $pattern;
+
         return $this;
     }
 
@@ -223,6 +232,7 @@ class Schema
     public function minItems(int $count): self
     {
         $this->minItems = $count;
+
         return $this;
     }
 
@@ -232,6 +242,7 @@ class Schema
     public function maxItems(int $count): self
     {
         $this->maxItems = $count;
+
         return $this;
     }
 
@@ -340,6 +351,7 @@ class Schema
                 return ['valid' => true, 'errors' => []];
             }
             $errors[] = "{$path}: Value cannot be null";
+
             return ['valid' => false, 'errors' => $errors];
         }
 
@@ -432,15 +444,13 @@ class Schema
 
             case SchemaType::Enum:
                 if (!in_array($value, $this->enumValues, true)) {
-                    $allowed = implode(', ', array_map(fn($v) => json_encode($v), $this->enumValues));
+                    $allowed = implode(', ', array_map(fn ($v) => json_encode($v), $this->enumValues));
                     $errors[] = "{$path}: Value must be one of: {$allowed}";
                 }
                 break;
 
             case SchemaType::Null:
-                if ($value !== null) {
-                    $errors[] = "{$path}: Expected null, got " . gettype($value);
-                }
+                $errors[] = "{$path}: Expected null, got " . gettype($value);
                 break;
         }
 

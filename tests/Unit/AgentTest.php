@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 use PapiAI\Core\Agent;
 use PapiAI\Core\Contracts\ProviderInterface;
-use PapiAI\Core\Message;
 use PapiAI\Core\Response;
 use PapiAI\Core\Tool;
 use PapiAI\Core\ToolCall;
@@ -47,7 +46,7 @@ describe('Agent', function () {
                 name: 'test',
                 description: 'Test tool',
                 parameters: [],
-                handler: fn() => 'result',
+                handler: fn () => 'result',
             );
 
             $agent = new Agent(
@@ -87,8 +86,9 @@ describe('Agent', function () {
             $this->mockProvider
                 ->expects('chat')
                 ->withArgs(function ($messages, $options) {
-                    $systemMessages = array_filter($messages, fn($m) => $m->isSystem());
+                    $systemMessages = array_filter($messages, fn ($m) => $m->isSystem());
                     $systemMessage = reset($systemMessages) ?: null;
+
                     return $systemMessage !== null && $systemMessage->getText() === 'Be helpful';
                 })
                 ->andReturn(new Response(text: 'OK'));
@@ -111,6 +111,7 @@ describe('Agent', function () {
                 parameters: [],
                 handler: function () use (&$toolExecuted) {
                     $toolExecuted = true;
+
                     return ['data' => 42];
                 },
             );
@@ -158,7 +159,7 @@ describe('Agent', function () {
                 name: 'loop',
                 description: 'Loops forever',
                 parameters: [],
-                handler: fn() => 'done',
+                handler: fn () => 'done',
             );
 
             $agent = new Agent(
@@ -168,7 +169,7 @@ describe('Agent', function () {
                 maxTurns: 3,
             );
 
-            expect(fn() => $agent->run('Loop'))->toThrow(InvalidArgumentException::class);
+            expect(fn () => $agent->run('Loop'))->toThrow(InvalidArgumentException::class);
         });
     });
 
@@ -181,7 +182,7 @@ describe('Agent', function () {
                 name: 'test_tool',
                 description: 'Test',
                 parameters: [],
-                handler: fn() => 'result',
+                handler: fn () => 'result',
             );
 
             $this->mockProvider
@@ -219,6 +220,7 @@ describe('Agent', function () {
                 parameters: [],
                 handler: function () {
                     usleep(10000); // 10ms
+
                     return 'done';
                 },
             );
@@ -290,7 +292,7 @@ describe('Agent', function () {
                 name: 'dynamic',
                 description: 'Added later',
                 parameters: [],
-                handler: fn() => 'dynamic result',
+                handler: fn () => 'dynamic result',
             );
 
             $this->mockProvider

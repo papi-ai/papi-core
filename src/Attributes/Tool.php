@@ -22,5 +22,6 @@ class Tool
     public function __construct(
         public readonly string $description,
         public readonly ?string $name = null,
-    ) {}
+    ) {
+    }
 }

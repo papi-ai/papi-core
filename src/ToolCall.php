@@ -20,7 +20,8 @@ final class ToolCall
         public readonly string $id,
         public readonly string $name,
         public readonly array $arguments,
-    ) {}
+    ) {
+    }
 
     /**
      * Create from Anthropic API format.

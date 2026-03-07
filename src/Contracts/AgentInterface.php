@@ -16,6 +16,8 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\Response;
 use PapiAI\Core\Schema\Schema;
+use PapiAI\Core\StreamChunk;
+use PapiAI\Core\StreamEvent;
 
 interface AgentInterface
 {

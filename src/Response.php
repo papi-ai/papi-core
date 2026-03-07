@@ -31,7 +31,8 @@ final class Response
         public readonly array $messages = [],
         public readonly array $usage = [],
         public readonly ?string $stopReason = null,
-    ) {}
+    ) {
+    }
 
     /**
      * Check if the response has tool calls.

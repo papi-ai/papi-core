@@ -12,9 +12,9 @@
 
 declare(strict_types=1);
 
-use PapiAI\Core\Tool;
-use PapiAI\Core\Attributes\Tool as ToolAttribute;
 use PapiAI\Core\Attributes\Description;
+use PapiAI\Core\Attributes\Tool as ToolAttribute;
+use PapiAI\Core\Tool;
 
 describe('Tool', function () {
     describe('make', function () {
@@ -25,7 +25,7 @@ describe('Tool', function () {
                 parameters: [
                     'name' => ['type' => 'string', 'description' => 'Name to greet'],
                 ],
-                handler: fn(array $args) => "Hello, {$args['name']}!",
+                handler: fn (array $args) => "Hello, {$args['name']}!",
             );
 
             expect($tool->getName())->toBe('greet');
@@ -40,7 +40,7 @@ describe('Tool', function () {
                     'a' => ['type' => 'number'],
                     'b' => ['type' => 'number'],
                 ],
-                handler: fn(array $args) => $args['a'] + $args['b'],
+                handler: fn (array $args) => $args['a'] + $args['b'],
             );
 
             $result = $tool->execute(['a' => 5, 'b' => 3]);
@@ -55,7 +55,7 @@ describe('Tool', function () {
                     'required_param' => ['type' => 'string'],
                     'optional_param' => ['type' => 'string', 'default' => 'default'],
                 ],
-                handler: fn() => null,
+                handler: fn () => null,
             );
 
             $schema = $tool->getParameterSchema();
@@ -75,7 +75,7 @@ describe('Tool', function () {
                 parameters: [
                     'city' => ['type' => 'string'],
                 ],
-                handler: fn() => null,
+                handler: fn () => null,
             );
 
             $formatted = $tool->toAnthropic();
@@ -94,7 +94,7 @@ describe('Tool', function () {
                 parameters: [
                     'city' => ['type' => 'string'],
                 ],
-                handler: fn() => null,
+                handler: fn () => null,
             );
 
             $formatted = $tool->toOpenAI();
@@ -111,14 +111,14 @@ describe('Tool', function () {
 
             expect($tools)->toHaveCount(2);
 
-            $greet = array_values(array_filter($tools, fn($t) => $t->getName() === 'greet'))[0] ?? null;
+            $greet = array_values(array_filter($tools, fn ($t) => $t->getName() === 'greet'))[0] ?? null;
             expect($greet)->not->toBeNull();
             expect($greet->getDescription())->toBe('Greet someone');
         });
 
         it('generates parameter schema from type hints', function () {
             $tools = Tool::fromClass(TestToolClass::class);
-            $greet = array_values(array_filter($tools, fn($t) => $t->getName() === 'greet'))[0];
+            $greet = array_values(array_filter($tools, fn ($t) => $t->getName() === 'greet'))[0];
 
             $schema = $greet->getParameterSchema();
 
@@ -128,7 +128,7 @@ describe('Tool', function () {
 
         it('handles optional parameters', function () {
             $tools = Tool::fromClass(TestToolClass::class);
-            $greet = array_values(array_filter($tools, fn($t) => $t->getName() === 'greet'))[0];
+            $greet = array_values(array_filter($tools, fn ($t) => $t->getName() === 'greet'))[0];
 
             $schema = $greet->getParameterSchema();
 
@@ -138,7 +138,7 @@ describe('Tool', function () {
 
         it('includes parameter descriptions from attributes', function () {
             $tools = Tool::fromClass(TestToolClass::class);
-            $greet = array_values(array_filter($tools, fn($t) => $t->getName() === 'greet'))[0];
+            $greet = array_values(array_filter($tools, fn ($t) => $t->getName() === 'greet'))[0];
 
             $schema = $greet->getParameterSchema();
 
@@ -147,7 +147,7 @@ describe('Tool', function () {
 
         it('executes class methods', function () {
             $tools = Tool::fromClass(new TestToolClass());
-            $add = array_values(array_filter($tools, fn($t) => $t->getName() === 'add_numbers'))[0];
+            $add = array_values(array_filter($tools, fn ($t) => $t->getName() === 'add_numbers'))[0];
 
             $result = $add->execute(['a' => 10, 'b' => 5]);
             expect($result)->toBe(15);

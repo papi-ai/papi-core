@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 use PapiAI\Core\Conversation;
 use PapiAI\Core\Message;
-use PapiAI\Core\ToolCall;
 
 describe('Conversation', function () {
     describe('message management', function () {

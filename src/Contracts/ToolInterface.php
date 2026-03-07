@@ -41,4 +41,18 @@ interface ToolInterface
      * @return mixed The tool result
      */
     public function execute(array $arguments, mixed $context = null): mixed;
+
+    /**
+     * Convert to Anthropic API tool format.
+     *
+     * @return array{name: string, description: string, input_schema: array}
+     */
+    public function toAnthropic(): array;
+
+    /**
+     * Convert to OpenAI API tool format.
+     *
+     * @return array{type: string, function: array{name: string, description: string, parameters: array}}
+     */
+    public function toOpenAI(): array;
 }

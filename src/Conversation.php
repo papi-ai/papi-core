@@ -32,6 +32,7 @@ final class Conversation
     public function setSystem(string $prompt): self
     {
         $this->systemPrompt = $prompt;
+
         return $this;
     }
 
@@ -41,6 +42,7 @@ final class Conversation
     public function addUser(string|array $content): self
     {
         $this->messages[] = Message::user($content);
+
         return $this;
     }
 
@@ -50,6 +52,7 @@ final class Conversation
     public function addAssistant(string $content, ?array $toolCalls = null): self
     {
         $this->messages[] = Message::assistant($content, $toolCalls);
+
         return $this;
     }
 
@@ -59,6 +62,7 @@ final class Conversation
     public function addToolResult(string $toolCallId, mixed $result): self
     {
         $this->messages[] = Message::toolResult($toolCallId, $result);
+
         return $this;
     }
 
@@ -72,6 +76,7 @@ final class Conversation
         } else {
             $this->messages[] = $message;
         }
+
         return $this;
     }
 

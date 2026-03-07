@@ -27,7 +27,8 @@ final class Message
         public readonly string|array $content,
         public readonly ?array $toolCalls = null,
         public readonly ?string $toolCallId = null,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a user message.
@@ -168,7 +169,7 @@ final class Message
         ];
 
         if ($this->toolCalls !== null) {
-            $data['tool_calls'] = array_map(fn(ToolCall $tc) => $tc->toArray(), $this->toolCalls);
+            $data['tool_calls'] = array_map(fn (ToolCall $tc) => $tc->toArray(), $this->toolCalls);
         }
 
         if ($this->toolCallId !== null) {

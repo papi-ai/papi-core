@@ -29,7 +29,8 @@ final class StreamEvent
         public readonly ?array $toolInput = null,
         public readonly mixed $result = null,
         public readonly ?string $error = null,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a text event.

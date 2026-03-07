@@ -112,7 +112,6 @@ final class Tool implements ToolInterface
                 continue;
             }
 
-            /** @var ToolAttribute $attr */
             $attr = $attributes[0]->newInstance();
             $toolName = $attr->name ?? self::toSnakeCase($method->getName());
 
