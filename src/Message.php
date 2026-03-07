@@ -159,6 +159,27 @@ final class Message
     }
 
     /**
+     * Create from array format.
+     */
+    public static function fromArray(array $data): self
+    {
+        $toolCalls = null;
+        if (isset($data['tool_calls'])) {
+            $toolCalls = array_map(
+                fn (array $tc) => new ToolCall($tc['id'], $tc['name'], $tc['arguments']),
+                $data['tool_calls'],
+            );
+        }
+
+        return new self(
+            role: Role::from($data['role']),
+            content: $data['content'],
+            toolCalls: $toolCalls,
+            toolCallId: $data['tool_call_id'] ?? null,
+        );
+    }
+
+    /**
      * Convert to array format.
      */
     public function toArray(): array

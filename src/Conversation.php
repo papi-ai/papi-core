@@ -145,6 +145,35 @@ final class Conversation
     }
 
     /**
+     * Serialize to array.
+     */
+    public function toArray(): array
+    {
+        return [
+            'system' => $this->systemPrompt,
+            'messages' => array_map(fn (Message $m) => $m->toArray(), $this->messages),
+        ];
+    }
+
+    /**
+     * Deserialize from array.
+     */
+    public static function fromArray(array $data): self
+    {
+        $conversation = new self();
+
+        if (isset($data['system']) && $data['system'] !== null) {
+            $conversation->setSystem($data['system']);
+        }
+
+        foreach ($data['messages'] ?? [] as $messageData) {
+            $conversation->messages[] = Message::fromArray($messageData);
+        }
+
+        return $conversation;
+    }
+
+    /**
      * Create from array of messages.
      */
     public static function fromMessages(array $messages): self
