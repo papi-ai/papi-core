@@ -17,6 +17,7 @@ namespace PapiAI\Core;
 use Closure;
 use InvalidArgumentException;
 use PapiAI\Core\Contracts\AgentInterface;
+use PapiAI\Core\Contracts\MiddlewareInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Contracts\ToolInterface;
 use PapiAI\Core\Schema\Schema;
@@ -29,6 +30,9 @@ final class Agent implements AgentInterface
     /** @var array<string, Closure> */
     private array $hooks = [];
 
+    /** @var array<MiddlewareInterface> */
+    private array $middleware = [];
+
     /**
      * @param ProviderInterface $provider The LLM provider
      * @param string $model The model to use
@@ -38,6 +42,7 @@ final class Agent implements AgentInterface
      * @param int $maxTokens Max tokens in response
      * @param float $temperature Temperature for generation
      * @param int $maxTurns Max agentic turns (tool call loops)
+     * @param array<MiddlewareInterface> $middleware Middleware pipeline
      */
     public function __construct(
         private readonly ProviderInterface $provider,
@@ -48,11 +53,13 @@ final class Agent implements AgentInterface
         private readonly int $maxTokens = 4096,
         private readonly float $temperature = 0.7,
         private readonly int $maxTurns = 10,
+        array $middleware = [],
     ) {
         foreach ($tools as $tool) {
             $this->addTool($tool);
         }
         $this->hooks = $hooks;
+        $this->middleware = $middleware;
     }
 
     public function addTool(ToolInterface $tool): self
@@ -68,6 +75,16 @@ final class Agent implements AgentInterface
     }
 
     /**
+     * Add middleware to the pipeline.
+     */
+    public function addMiddleware(MiddlewareInterface $middleware): self
+    {
+        $this->middleware[] = $middleware;
+
+        return $this;
+    }
+
+    /**
      * Run the agent with a prompt.
      *
      * @param string $prompt The user prompt
@@ -78,6 +95,36 @@ final class Agent implements AgentInterface
      * } $options Run options
      */
     public function run(string $prompt, array $options = []): Response
+    {
+        if (!empty($this->middleware)) {
+            $request = new AgentRequest(prompt: $prompt, options: $options);
+
+            return $this->runThroughMiddleware($request);
+        }
+
+        return $this->executeRun($prompt, $options);
+    }
+
+    /**
+     * Run the request through the middleware pipeline.
+     */
+    private function runThroughMiddleware(AgentRequest $request): Response
+    {
+        $handler = fn (AgentRequest $req): Response => $this->executeRun($req->prompt, $req->options);
+
+        // Build the middleware chain from inside out
+        foreach (array_reverse($this->middleware) as $middleware) {
+            $next = $handler;
+            $handler = fn (AgentRequest $req): Response => $middleware->process($req, $next);
+        }
+
+        return $handler($request);
+    }
+
+    /**
+     * Execute the actual agent run (the inner handler).
+     */
+    private function executeRun(string $prompt, array $options = []): Response
     {
         $messages = [];
         $maxTurns = $options['maxTurns'] ?? $this->maxTurns;
