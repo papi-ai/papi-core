@@ -62,6 +62,14 @@ final class Agent implements AgentInterface
         $this->middleware = $middleware;
     }
 
+    /**
+     * Create a fluent builder for constructing an Agent.
+     */
+    public static function build(): AgentBuilder
+    {
+        return new AgentBuilder();
+    }
+
     public function addTool(ToolInterface $tool): self
     {
         $this->tools[$tool->getName()] = $tool;
