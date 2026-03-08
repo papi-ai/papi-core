@@ -19,6 +19,12 @@ namespace PapiAI\Core\Exception;
  */
 class AuthenticationException extends ProviderException
 {
+    /**
+     * @param string $provider The provider that rejected authentication
+     * @param int $statusCode HTTP status code (typically 401)
+     * @param array|null $responseBody Raw response body from the provider
+     * @param \Throwable|null $previous The underlying exception, if any
+     */
     public function __construct(
         string $provider,
         int $statusCode = 401,

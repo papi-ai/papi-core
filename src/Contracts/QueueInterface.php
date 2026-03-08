@@ -17,6 +17,12 @@ namespace PapiAI\Core\Contracts;
 use PapiAI\Core\AgentJob;
 use PapiAI\Core\JobStatus;
 
+/**
+ * Contract for asynchronous agent job queues.
+ *
+ * Enables dispatching agent work to background workers and polling for results,
+ * useful for long-running or high-volume agent executions.
+ */
 interface QueueInterface
 {
     /**
@@ -28,6 +34,10 @@ interface QueueInterface
 
     /**
      * Get the status of a queued job.
+     *
+     * @param string $jobId The job identifier returned by dispatch()
+     *
+     * @return JobStatus Current status including result when completed
      */
     public function status(string $jobId): JobStatus;
 }

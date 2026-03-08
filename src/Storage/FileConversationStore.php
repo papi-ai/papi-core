@@ -18,8 +18,19 @@ use PapiAI\Core\Contracts\ConversationStoreInterface;
 use PapiAI\Core\Conversation;
 use RuntimeException;
 
+/**
+ * File-based implementation of ConversationStoreInterface.
+ *
+ * Persists conversations as JSON files in a directory. Suitable for simple
+ * applications and development; for production use, prefer a database-backed store.
+ */
 final class FileConversationStore implements ConversationStoreInterface
 {
+    /**
+     * @param string $directory Path to the directory where conversation files are stored
+     *
+     * @throws RuntimeException If the directory cannot be created
+     */
     public function __construct(
         private readonly string $directory,
     ) {
@@ -28,6 +39,11 @@ final class FileConversationStore implements ConversationStoreInterface
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws RuntimeException If the file cannot be written
+     */
     public function save(string $id, Conversation $conversation): void
     {
         $path = $this->path($id);
@@ -38,6 +54,7 @@ final class FileConversationStore implements ConversationStoreInterface
         }
     }
 
+    /** {@inheritDoc} */
     public function load(string $id): ?Conversation
     {
         $path = $this->path($id);
@@ -61,6 +78,7 @@ final class FileConversationStore implements ConversationStoreInterface
         return Conversation::fromArray($data);
     }
 
+    /** {@inheritDoc} */
     public function delete(string $id): void
     {
         $path = $this->path($id);
@@ -70,6 +88,7 @@ final class FileConversationStore implements ConversationStoreInterface
         }
     }
 
+    /** {@inheritDoc} */
     public function list(int $limit = 50): array
     {
         $files = glob($this->directory . '/*.json');

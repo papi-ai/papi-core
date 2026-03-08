@@ -23,6 +23,12 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
 
+/**
+ * Default implementation of ToolInterface for defining LLM-callable tools.
+ *
+ * Tools can be created via the static factory methods: make() for closure-based tools,
+ * or fromClass() to automatically discover methods annotated with #[Tool] attributes.
+ */
 final class Tool implements ToolInterface
 {
     private Closure $handler;
@@ -43,12 +49,14 @@ final class Tool implements ToolInterface
     }
 
     /**
-     * Create a tool from a function.
+     * Create a tool from a closure with explicit parameter definitions.
      *
      * @param string $name Tool name (snake_case)
      * @param string $description Description for the LLM
-     * @param array<string, array> $parameters Parameter definitions
+     * @param array<string, array{type?: string, description?: string, enum?: array, default?: mixed}> $parameters Parameter definitions
      * @param Closure $handler The handler function
+     *
+     * @return self A configured tool instance
      */
     public static function make(
         string $name,
@@ -176,21 +184,25 @@ final class Tool implements ToolInterface
         return $tools;
     }
 
+    /** {@inheritDoc} */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /** {@inheritDoc} */
     public function getDescription(): string
     {
         return $this->description;
     }
 
+    /** {@inheritDoc} */
     public function getParameterSchema(): array
     {
         return $this->parameters;
     }
 
+    /** {@inheritDoc} */
     public function execute(array $arguments, mixed $context = null): mixed
     {
         return ($this->handler)($arguments, $context);

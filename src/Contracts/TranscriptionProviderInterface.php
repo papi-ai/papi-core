@@ -16,6 +16,12 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\TranscriptionResponse;
 
+/**
+ * Contract for providers that transcribe audio to text (speech-to-text).
+ *
+ * Implementations process audio files and return transcribed text with
+ * optional language detection and timed segments.
+ */
 interface TranscriptionProviderInterface
 {
     /**
@@ -28,6 +34,8 @@ interface TranscriptionProviderInterface
      *     prompt?: string,
      *     timestamps?: bool,
      * } $options Provider-specific options
+     *
+     * @return TranscriptionResponse The transcribed text with optional segments and language info
      */
     public function transcribe(string $audioPath, array $options = []): TranscriptionResponse;
 }

@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core\Schema;
 
+/**
+ * JSON Schema primitive types supported by the Schema builder.
+ *
+ * Used to define the type of each field when constructing schemas
+ * for structured output validation and tool parameter definitions.
+ */
 enum SchemaType: string
 {
     case String = 'string';

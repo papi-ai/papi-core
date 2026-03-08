@@ -27,7 +27,11 @@ final class Conversation
     private ?string $systemPrompt = null;
 
     /**
-     * Set the system prompt.
+     * Set the system prompt that precedes all other messages.
+     *
+     * @param string $prompt The system instruction text
+     *
+     * @return self For method chaining
      */
     public function setSystem(string $prompt): self
     {
@@ -37,7 +41,11 @@ final class Conversation
     }
 
     /**
-     * Add a user message.
+     * Add a user message to the conversation.
+     *
+     * @param string|array $content Text string or multimodal content array
+     *
+     * @return self For method chaining
      */
     public function addUser(string|array $content): self
     {
@@ -47,7 +55,12 @@ final class Conversation
     }
 
     /**
-     * Add an assistant message.
+     * Add an assistant message to the conversation.
+     *
+     * @param string $content The assistant's text response
+     * @param array<ToolCall>|null $toolCalls Tool calls the assistant made, if any
+     *
+     * @return self For method chaining
      */
     public function addAssistant(string $content, ?array $toolCalls = null): self
     {
@@ -57,7 +70,12 @@ final class Conversation
     }
 
     /**
-     * Add a tool result.
+     * Add a tool result message to the conversation.
+     *
+     * @param string $toolCallId The ID of the tool call being responded to
+     * @param mixed $result The tool's return value
+     *
+     * @return self For method chaining
      */
     public function addToolResult(string $toolCallId, mixed $result): self
     {
@@ -67,7 +85,11 @@ final class Conversation
     }
 
     /**
-     * Add a message directly.
+     * Add a pre-built message directly to the conversation.
+     *
+     * @param Message $message The message to add (system messages update the system prompt)
+     *
+     * @return self For method chaining
      */
     public function addMessage(Message $message): self
     {
@@ -97,7 +119,9 @@ final class Conversation
     }
 
     /**
-     * Get message count (excluding system).
+     * Get the number of messages in the conversation (excluding system prompt).
+     *
+     * @return int Message count
      */
     public function count(): int
     {
@@ -105,7 +129,11 @@ final class Conversation
     }
 
     /**
-     * Clear all messages (optionally keep system).
+     * Clear all messages from the conversation.
+     *
+     * @param bool $keepSystem Whether to preserve the system prompt
+     *
+     * @return self For method chaining
      */
     public function clear(bool $keepSystem = false): self
     {
@@ -119,7 +147,9 @@ final class Conversation
     }
 
     /**
-     * Get the last message.
+     * Get the most recent message in the conversation.
+     *
+     * @return Message|null The last message, or null if the conversation is empty
      */
     public function getLastMessage(): ?Message
     {
@@ -131,7 +161,9 @@ final class Conversation
     }
 
     /**
-     * Get the last assistant message.
+     * Get the most recent assistant message in the conversation.
+     *
+     * @return Message|null The last assistant message, or null if none exists
      */
     public function getLastAssistantMessage(): ?Message
     {
@@ -145,7 +177,9 @@ final class Conversation
     }
 
     /**
-     * Serialize to array.
+     * Serialize the conversation to an array for storage.
+     *
+     * @return array{system: string|null, messages: array<array>}
      */
     public function toArray(): array
     {
@@ -156,7 +190,11 @@ final class Conversation
     }
 
     /**
-     * Deserialize from array.
+     * Deserialize a conversation from an array (e.g., from a store).
+     *
+     * @param array{system?: string|null, messages?: array<array>} $data Serialised conversation data
+     *
+     * @return self The restored conversation
      */
     public static function fromArray(array $data): self
     {
@@ -174,7 +212,11 @@ final class Conversation
     }
 
     /**
-     * Create from array of messages.
+     * Create a conversation from an array of Message objects.
+     *
+     * @param array<Message> $messages Messages to populate the conversation with
+     *
+     * @return self The new conversation
      */
     public static function fromMessages(array $messages): self
     {

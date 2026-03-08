@@ -35,6 +35,7 @@ final class RetryMiddleware implements MiddlewareInterface
     ) {
     }
 
+    /** {@inheritDoc} */
     public function process(AgentRequest $request, callable $next): Response
     {
         $lastException = null;

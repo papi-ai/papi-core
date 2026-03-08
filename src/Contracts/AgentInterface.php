@@ -19,6 +19,12 @@ use PapiAI\Core\Schema\Schema;
 use PapiAI\Core\StreamChunk;
 use PapiAI\Core\StreamEvent;
 
+/**
+ * Contract for AI agents that orchestrate LLM interactions and tool execution.
+ *
+ * An agent manages the agentic loop: sending prompts, processing tool calls,
+ * and returning final responses. Supports both synchronous and streaming modes.
+ */
 interface AgentInterface
 {
     /**
@@ -53,11 +59,17 @@ interface AgentInterface
 
     /**
      * Add a tool to the agent.
+     *
+     * @param ToolInterface $tool The tool to register
+     *
+     * @return self For method chaining
      */
     public function addTool(ToolInterface $tool): self;
 
     /**
      * Get the provider used by this agent.
+     *
+     * @return ProviderInterface The underlying LLM provider
      */
     public function getProvider(): ProviderInterface;
 }

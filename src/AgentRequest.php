@@ -19,6 +19,12 @@ namespace PapiAI\Core;
  */
 final class AgentRequest
 {
+    /**
+     * @param string $prompt The user prompt
+     * @param array<string, mixed> $options Agent run options (e.g., outputSchema, maxTurns)
+     * @param array<Message> $messages Pre-existing conversation messages
+     * @param array<string, mixed> $metadata Arbitrary metadata for middleware inspection
+     */
     public function __construct(
         public readonly string $prompt,
         public readonly array $options = [],
@@ -27,6 +33,14 @@ final class AgentRequest
     ) {
     }
 
+    /**
+     * Return a new request with an additional option set.
+     *
+     * @param string $key Option key
+     * @param mixed $value Option value
+     *
+     * @return self A new immutable request with the option merged
+     */
     public function withOption(string $key, mixed $value): self
     {
         return new self(
@@ -37,6 +51,13 @@ final class AgentRequest
         );
     }
 
+    /**
+     * Return a new request with the message history replaced.
+     *
+     * @param array<Message> $messages The new message list
+     *
+     * @return self A new immutable request with the updated messages
+     */
     public function withMessages(array $messages): self
     {
         return new self(
@@ -47,6 +68,14 @@ final class AgentRequest
         );
     }
 
+    /**
+     * Return a new request with an additional metadata entry.
+     *
+     * @param string $key Metadata key
+     * @param mixed $value Metadata value
+     *
+     * @return self A new immutable request with the metadata merged
+     */
     public function withMetadata(string $key, mixed $value): self
     {
         return new self(

@@ -17,11 +17,18 @@ namespace PapiAI\Core\VectorStore;
 use PapiAI\Core\Contracts\VectorStoreInterface;
 use PapiAI\Core\SearchResult;
 
+/**
+ * In-memory vector store using brute-force cosine similarity search.
+ *
+ * Suitable for development, testing, and small datasets. All data is lost
+ * when the process ends. For production use, prefer a dedicated vector database.
+ */
 final class InMemoryVectorStore implements VectorStoreInterface
 {
     /** @var array<string, array{vector: array<float>, metadata: array<string, mixed>, content: ?string}> */
     private array $store = [];
 
+    /** {@inheritDoc} */
     public function upsert(string $id, array $vector, array $metadata = [], ?string $content = null): void
     {
         $this->store[$id] = [
@@ -31,6 +38,7 @@ final class InMemoryVectorStore implements VectorStoreInterface
         ];
     }
 
+    /** {@inheritDoc} */
     public function query(array $vector, int $topK = 5, array $filter = []): array
     {
         $results = [];
@@ -55,16 +63,19 @@ final class InMemoryVectorStore implements VectorStoreInterface
         return array_slice($results, 0, $topK);
     }
 
+    /** {@inheritDoc} */
     public function delete(string $id): void
     {
         unset($this->store[$id]);
     }
 
+    /** {@inheritDoc} */
     public function flush(): void
     {
         $this->store = [];
     }
 
+    /** {@inheritDoc} */
     public function count(): int
     {
         return count($this->store);

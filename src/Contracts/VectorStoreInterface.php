@@ -16,6 +16,12 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\SearchResult;
 
+/**
+ * Contract for vector storage backends used in similarity search and RAG.
+ *
+ * Implementations store embedding vectors alongside metadata and content,
+ * enabling efficient nearest-neighbor queries for semantic retrieval.
+ */
 interface VectorStoreInterface
 {
     /**
@@ -40,6 +46,8 @@ interface VectorStoreInterface
 
     /**
      * Delete a vector by ID.
+     *
+     * @param string $id The document identifier to remove
      */
     public function delete(string $id): void;
 
@@ -50,6 +58,8 @@ interface VectorStoreInterface
 
     /**
      * Get the number of stored vectors.
+     *
+     * @return int Total number of vectors in the store
      */
     public function count(): int;
 }

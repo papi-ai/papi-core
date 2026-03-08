@@ -17,6 +17,12 @@ namespace PapiAI\Core\Contracts;
 use PapiAI\Core\AgentRequest;
 use PapiAI\Core\Response;
 
+/**
+ * Contract for agent middleware that intercepts requests and responses.
+ *
+ * Middleware wraps the agent execution pipeline, enabling cross-cutting concerns
+ * like logging, caching, rate limiting, and retry logic.
+ */
 interface MiddlewareInterface
 {
     /**
@@ -24,6 +30,8 @@ interface MiddlewareInterface
      *
      * @param AgentRequest $request The incoming request
      * @param callable(AgentRequest): Response $next The next handler in the chain
+     *
+     * @return Response The agent response, potentially modified by this middleware
      */
     public function process(AgentRequest $request, callable $next): Response;
 }

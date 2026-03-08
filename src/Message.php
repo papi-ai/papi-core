@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Immutable value object representing a single message in a conversation.
+ *
+ * Supports all LLM message roles (system, user, assistant, tool) and multimodal
+ * content (text + images). Use the static factory methods for convenient creation.
+ */
 final class Message
 {
     /**
@@ -32,6 +38,10 @@ final class Message
 
     /**
      * Create a user message.
+     *
+     * @param string|array $content Text string or multimodal content array
+     *
+     * @return self A new user-role message
      */
     public static function user(string|array $content): self
     {
@@ -39,7 +49,11 @@ final class Message
     }
 
     /**
-     * Create a system message.
+     * Create a system message containing instructions for the LLM.
+     *
+     * @param string $content The system prompt text
+     *
+     * @return self A new system-role message
      */
     public static function system(string $content): self
     {
@@ -51,6 +65,8 @@ final class Message
      *
      * @param string $content The message content
      * @param array<ToolCall>|null $toolCalls Tool calls made by the assistant
+     *
+     * @return self A new assistant-role message
      */
     public static function assistant(string $content, ?array $toolCalls = null): self
     {
@@ -58,10 +74,12 @@ final class Message
     }
 
     /**
-     * Create a tool result message.
+     * Create a tool result message to feed a tool's output back into the conversation.
      *
      * @param string $toolCallId The ID of the tool call being responded to
      * @param mixed $result The tool result (will be JSON encoded if not a string)
+     *
+     * @return self A new tool-role message
      */
     public static function toolResult(string $toolCallId, mixed $result): self
     {
@@ -71,11 +89,13 @@ final class Message
     }
 
     /**
-     * Create a user message with an image.
+     * Create a user message with an image for vision-capable models.
      *
-     * @param string $text The text content
-     * @param string $imageUrl The image URL or base64 data
-     * @param string $mediaType The image media type (e.g., 'image/jpeg')
+     * @param string $text The text content accompanying the image
+     * @param string $imageUrl The image URL (http/https) or base64-encoded data
+     * @param string $mediaType The image MIME type (e.g., 'image/jpeg', 'image/png')
+     *
+     * @return self A new multimodal user-role message
      */
     public static function userWithImage(string $text, string $imageUrl, string $mediaType = 'image/jpeg'): self
     {
@@ -101,6 +121,8 @@ final class Message
 
     /**
      * Check if this is a system message.
+     *
+     * @return bool True if this message has the system role
      */
     public function isSystem(): bool
     {
@@ -109,6 +131,8 @@ final class Message
 
     /**
      * Check if this is a user message.
+     *
+     * @return bool True if this message has the user role
      */
     public function isUser(): bool
     {
@@ -117,6 +141,8 @@ final class Message
 
     /**
      * Check if this is an assistant message.
+     *
+     * @return bool True if this message has the assistant role
      */
     public function isAssistant(): bool
     {
@@ -125,6 +151,8 @@ final class Message
 
     /**
      * Check if this is a tool result message.
+     *
+     * @return bool True if this message has the tool role
      */
     public function isTool(): bool
     {
@@ -133,6 +161,8 @@ final class Message
 
     /**
      * Check if this message has tool calls.
+     *
+     * @return bool True if the assistant requested tool invocations in this message
      */
     public function hasToolCalls(): bool
     {
@@ -140,7 +170,9 @@ final class Message
     }
 
     /**
-     * Get the text content of this message.
+     * Get the text content of this message, extracting from multimodal content if needed.
+     *
+     * @return string The text content, or empty string if no text is found
      */
     public function getText(): string
     {
@@ -159,7 +191,11 @@ final class Message
     }
 
     /**
-     * Create from array format.
+     * Create a message from a serialised array (e.g., from a conversation store).
+     *
+     * @param array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string} $data Serialised message data
+     *
+     * @return self The deserialised message
      */
     public static function fromArray(array $data): self
     {
@@ -180,7 +216,9 @@ final class Message
     }
 
     /**
-     * Convert to array format.
+     * Convert to a serialisable array representation.
+     *
+     * @return array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string}
      */
     public function toArray(): array
     {

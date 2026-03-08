@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Immutable value object containing the result of an audio transcription.
+ *
+ * Holds the transcribed text, detected language, duration, and optional
+ * timed segments for subtitle or alignment use cases.
+ */
 final class TranscriptionResponse
 {
     /**
@@ -33,7 +39,9 @@ final class TranscriptionResponse
     }
 
     /**
-     * Check if segments are available.
+     * Check if timed segments are available.
+     *
+     * @return bool True if the transcription includes timestamped segments
      */
     public function hasSegments(): bool
     {
@@ -41,7 +49,9 @@ final class TranscriptionResponse
     }
 
     /**
-     * Get the number of segments.
+     * Get the number of timed segments.
+     *
+     * @return int Segment count
      */
     public function segmentCount(): int
     {

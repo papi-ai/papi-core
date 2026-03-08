@@ -19,6 +19,12 @@ use PapiAI\Core\Contracts\ProviderInterface;
 use RuntimeException;
 use Throwable;
 
+/**
+ * Provider wrapper that automatically fails over to backup providers on error.
+ *
+ * Tries each provider in order until one succeeds. Useful for high-availability
+ * setups where multiple LLM providers can serve the same request.
+ */
 final class FailoverProvider implements ProviderInterface, EmbeddingProviderInterface
 {
     /** @var array<ProviderInterface> */
@@ -29,6 +35,8 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
     /**
      * @param array<ProviderInterface> $providers Ordered list of providers to try
      * @param array<class-string<Throwable>> $retryOn Exception types that trigger failover (empty = all)
+     *
+     * @throws \InvalidArgumentException If fewer than 2 providers are given
      */
     public function __construct(
         array $providers,
@@ -41,6 +49,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         $this->providers = array_values($providers);
     }
 
+    /** {@inheritDoc} */
     public function chat(array $messages, array $options = []): Response
     {
         return $this->tryProviders(
@@ -48,6 +57,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         );
     }
 
+    /** {@inheritDoc} */
     public function stream(array $messages, array $options = []): iterable
     {
         return $this->tryProviders(
@@ -55,6 +65,16 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         );
     }
 
+    /**
+     * Generate embeddings, failing over to the next provider that supports embeddings.
+     *
+     * @param string|array<string> $input One or more texts to embed
+     * @param array $options Provider-specific options
+     *
+     * @return EmbeddingResponse The embedding vectors
+     *
+     * @throws RuntimeException If no provider supports embeddings or all fail
+     */
     public function embed(string|array $input, array $options = []): EmbeddingResponse
     {
         return $this->tryProviders(function (ProviderInterface $provider) use ($input, $options) {
@@ -66,6 +86,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         });
     }
 
+    /** {@inheritDoc} */
     public function supportsTool(): bool
     {
         foreach ($this->providers as $provider) {
@@ -77,6 +98,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         return false;
     }
 
+    /** {@inheritDoc} */
     public function supportsVision(): bool
     {
         foreach ($this->providers as $provider) {
@@ -88,6 +110,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         return false;
     }
 
+    /** {@inheritDoc} */
     public function supportsStructuredOutput(): bool
     {
         foreach ($this->providers as $provider) {
@@ -99,6 +122,7 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
         return false;
     }
 
+    /** {@inheritDoc} */
     public function getName(): string
     {
         return 'failover';
@@ -106,6 +130,8 @@ final class FailoverProvider implements ProviderInterface, EmbeddingProviderInte
 
     /**
      * Get the provider that was last used successfully.
+     *
+     * @return ProviderInterface|null The last successful provider, or null if no call has been made
      */
     public function getLastUsedProvider(): ?ProviderInterface
     {

@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Represents the role of a participant in a conversation.
+ *
+ * Maps to the standard role values used by LLM APIs to distinguish
+ * between system instructions, user input, assistant output, and tool results.
+ */
 enum Role: string
 {
     case System = 'system';

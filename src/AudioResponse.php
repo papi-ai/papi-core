@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Immutable value object containing synthesized audio data from a TTS provider.
+ *
+ * Holds the raw audio bytes along with format and model metadata,
+ * and provides a convenience method to save the audio to disk.
+ */
 final class AudioResponse
 {
     /**
@@ -29,7 +35,11 @@ final class AudioResponse
     }
 
     /**
-     * Save audio to a file.
+     * Save audio data to a file on disk.
+     *
+     * @param string $path The file path to write to
+     *
+     * @return int|false Number of bytes written, or false on failure
      */
     public function save(string $path): int|false
     {
@@ -38,6 +48,8 @@ final class AudioResponse
 
     /**
      * Get the size of the audio data in bytes.
+     *
+     * @return int Size of the raw audio data
      */
     public function size(): int
     {

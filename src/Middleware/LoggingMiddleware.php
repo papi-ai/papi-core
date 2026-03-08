@@ -26,12 +26,17 @@ use Psr\Log\LoggerInterface;
  */
 final class LoggingMiddleware implements MiddlewareInterface
 {
+    /**
+     * @param LoggerInterface $logger PSR-3 logger instance
+     * @param string $level Log level for normal messages (e.g., 'info', 'debug')
+     */
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly string $level = 'info',
     ) {
     }
 
+    /** {@inheritDoc} */
     public function process(AgentRequest $request, callable $next): Response
     {
         $startTime = microtime(true);

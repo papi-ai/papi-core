@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core\Contracts;
 
+/**
+ * Contract for providers that support AI image generation and editing.
+ *
+ * Implementations translate between PapiAI's image API and provider-specific formats
+ * (e.g., OpenAI DALL-E, Stability AI).
+ */
 interface ImageProviderInterface
 {
     /**
@@ -46,11 +52,15 @@ interface ImageProviderInterface
 
     /**
      * Check if the provider supports image generation.
+     *
+     * @return bool True if generateImage() is available
      */
     public function supportsImageGeneration(): bool;
 
     /**
      * Check if the provider supports image editing.
+     *
+     * @return bool True if editImage() is available
      */
     public function supportsImageEditing(): bool;
 }

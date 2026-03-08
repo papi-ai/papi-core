@@ -14,15 +14,26 @@ declare(strict_types=1);
 
 namespace PapiAI\Core\Contracts;
 
+/**
+ * Contract for tools that can be invoked by an LLM agent.
+ *
+ * Tools expose a name, description, and parameter schema so the LLM can decide
+ * when and how to call them. Implementations must be serialisable to both
+ * Anthropic and OpenAI API formats.
+ */
 interface ToolInterface
 {
     /**
      * Get the tool name (used in API calls).
+     *
+     * @return string A snake_case identifier unique within the agent's tool set
      */
     public function getName(): string;
 
     /**
      * Get the tool description for the LLM.
+     *
+     * @return string A human-readable description the LLM uses to decide when to invoke this tool
      */
     public function getDescription(): string;
 

@@ -19,6 +19,11 @@ namespace PapiAI\Core;
  */
 final class CostEstimate
 {
+    /**
+     * @param float $inputCost Cost for input tokens
+     * @param float $outputCost Cost for output tokens
+     * @param string $currency Currency code (default: USD)
+     */
     public function __construct(
         public readonly float $inputCost,
         public readonly float $outputCost,
@@ -26,6 +31,11 @@ final class CostEstimate
     ) {
     }
 
+    /**
+     * Get the total estimated cost (input + output).
+     *
+     * @return float Combined cost in the specified currency
+     */
     public function total(): float
     {
         return $this->inputCost + $this->outputCost;
@@ -38,6 +48,8 @@ final class CostEstimate
      * @param int $outputTokens Number of output tokens
      * @param float $inputPricePerMillion Price per 1M input tokens
      * @param float $outputPricePerMillion Price per 1M output tokens
+     *
+     * @return self The calculated cost estimate
      */
     public static function fromUsage(
         int $inputTokens,

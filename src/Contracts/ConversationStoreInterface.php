@@ -16,6 +16,12 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\Conversation;
 
+/**
+ * Contract for persisting and retrieving conversation histories.
+ *
+ * Enables multi-turn conversations by storing message history between requests.
+ * Implementations may use files, databases, or any other storage backend.
+ */
 interface ConversationStoreInterface
 {
     /**
@@ -36,6 +42,8 @@ interface ConversationStoreInterface
 
     /**
      * Delete a conversation by ID.
+     *
+     * @param string $id Conversation identifier to remove
      */
     public function delete(string $id): void;
 

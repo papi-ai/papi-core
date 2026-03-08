@@ -22,6 +22,16 @@ use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Contracts\ToolInterface;
 use PapiAI\Core\Schema\Schema;
 
+/**
+ * Core agent implementation that orchestrates LLM interactions and tool execution.
+ *
+ * Manages the agentic loop: sending prompts to the provider, executing tool calls,
+ * feeding results back, and repeating until the model produces a final response
+ * or the maximum number of turns is reached. Supports middleware pipelines,
+ * event hooks, structured output, and streaming.
+ *
+ * Create instances via the fluent builder: Agent::build()->provider($p)->model('...')->create()
+ */
 final class Agent implements AgentInterface
 {
     /** @var array<string, ToolInterface> */
@@ -64,12 +74,15 @@ final class Agent implements AgentInterface
 
     /**
      * Create a fluent builder for constructing an Agent.
+     *
+     * @return AgentBuilder A new builder instance
      */
     public static function build(): AgentBuilder
     {
         return new AgentBuilder();
     }
 
+    /** {@inheritDoc} */
     public function addTool(ToolInterface $tool): self
     {
         $this->tools[$tool->getName()] = $tool;
@@ -77,13 +90,18 @@ final class Agent implements AgentInterface
         return $this;
     }
 
+    /** {@inheritDoc} */
     public function getProvider(): ProviderInterface
     {
         return $this->provider;
     }
 
     /**
-     * Add middleware to the pipeline.
+     * Add middleware to the agent's request/response pipeline.
+     *
+     * @param MiddlewareInterface $middleware The middleware to add
+     *
+     * @return self For method chaining
      */
     public function addMiddleware(MiddlewareInterface $middleware): self
     {
@@ -93,7 +111,10 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Run the agent with a prompt.
+     * Run the agent with a prompt, executing the full agentic loop.
+     *
+     * Sends the prompt through any middleware, then iterates: call the LLM,
+     * execute tool calls, feed results back, until a final response or max turns.
      *
      * @param string $prompt The user prompt
      * @param array{
@@ -101,6 +122,10 @@ final class Agent implements AgentInterface
      *     context?: mixed,
      *     maxTurns?: int,
      * } $options Run options
+     *
+     * @return Response The final agent response
+     *
+     * @throws InvalidArgumentException If max turns is exceeded or structured output parsing fails
      */
     public function run(string $prompt, array $options = []): Response
     {
@@ -171,7 +196,9 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Stream the agent response as text chunks.
+     * {@inheritDoc}
+     *
+     * Streams text chunks from the provider without executing the agentic tool loop.
      */
     public function stream(string $prompt, array $options = []): iterable
     {
@@ -188,7 +215,9 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Stream the agent response with detailed events.
+     * {@inheritDoc}
+     *
+     * Streams detailed events including text, tool calls, tool results, and completion.
      */
     public function streamEvents(string $prompt, array $options = []): iterable
     {

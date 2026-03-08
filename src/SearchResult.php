@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Immutable value object representing a single result from a vector similarity search.
+ *
+ * Returned by VectorStoreInterface::query(), ranked by cosine similarity score.
+ */
 final class SearchResult
 {
     /**

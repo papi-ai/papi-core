@@ -16,6 +16,11 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\AudioResponse;
 
+/**
+ * Contract for providers that synthesize speech from text (TTS).
+ *
+ * Implementations convert text input to audio data in various formats and voices.
+ */
 interface TextToSpeechProviderInterface
 {
     /**
@@ -29,6 +34,8 @@ interface TextToSpeechProviderInterface
      *     speed?: float,
      *     instructions?: string,
      * } $options Provider-specific options
+     *
+     * @return AudioResponse The generated audio data with format metadata
      */
     public function synthesize(string $text, array $options = []): AudioResponse;
 }

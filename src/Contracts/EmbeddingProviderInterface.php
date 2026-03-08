@@ -16,6 +16,12 @@ namespace PapiAI\Core\Contracts;
 
 use PapiAI\Core\EmbeddingResponse;
 
+/**
+ * Contract for providers that generate text embeddings (vector representations).
+ *
+ * Used to convert text into numerical vectors for semantic search, clustering,
+ * and retrieval-augmented generation (RAG) workflows.
+ */
 interface EmbeddingProviderInterface
 {
     /**
@@ -26,6 +32,8 @@ interface EmbeddingProviderInterface
      *     model?: string,
      *     dimensions?: int,
      * } $options Provider-specific options
+     *
+     * @return EmbeddingResponse The embedding vectors with usage statistics
      */
     public function embed(string|array $input, array $options = []): EmbeddingResponse;
 }

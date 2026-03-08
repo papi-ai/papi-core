@@ -19,6 +19,13 @@ namespace PapiAI\Core\Exception;
  */
 class ProviderException extends PapiException
 {
+    /**
+     * @param string $message Human-readable error description
+     * @param string $provider The provider name that encountered the error
+     * @param int $statusCode HTTP status code from the provider (0 if not applicable)
+     * @param array|null $responseBody Raw response body from the provider, if available
+     * @param \Throwable|null $previous The underlying exception, if any
+     */
     public function __construct(
         string $message,
         public readonly string $provider,

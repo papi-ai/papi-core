@@ -19,6 +19,13 @@ namespace PapiAI\Core\Exception;
  */
 class RateLimitException extends ProviderException
 {
+    /**
+     * @param string $provider The provider that rate-limited the request
+     * @param int|null $retryAfterSeconds Seconds to wait before retrying, if specified by the provider
+     * @param int $statusCode HTTP status code (typically 429)
+     * @param array|null $responseBody Raw response body from the provider
+     * @param \Throwable|null $previous The underlying exception, if any
+     */
     public function __construct(
         string $provider,
         public readonly ?int $retryAfterSeconds = null,

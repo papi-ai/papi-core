@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+/**
+ * Immutable value object containing embedding vectors returned by an embedding provider.
+ *
+ * Wraps one or more embedding vectors along with the model used and token usage,
+ * providing convenience methods for single-vector access and dimensionality inspection.
+ */
 final class EmbeddingResponse
 {
     /**
@@ -39,7 +45,9 @@ final class EmbeddingResponse
     }
 
     /**
-     * Get the number of embeddings.
+     * Get the number of embeddings in this response.
+     *
+     * @return int Number of embedding vectors
      */
     public function count(): int
     {
@@ -47,7 +55,9 @@ final class EmbeddingResponse
     }
 
     /**
-     * Get the dimensionality of the embeddings.
+     * Get the dimensionality (vector length) of the embeddings.
+     *
+     * @return int Number of dimensions per vector
      */
     public function dimensions(): int
     {
@@ -55,7 +65,9 @@ final class EmbeddingResponse
     }
 
     /**
-     * Get prompt token count.
+     * Get the number of prompt tokens consumed.
+     *
+     * @return int Prompt token count, or 0 if unavailable
      */
     public function getPromptTokens(): int
     {
@@ -63,7 +75,9 @@ final class EmbeddingResponse
     }
 
     /**
-     * Get total token count.
+     * Get the total token count for this embedding request.
+     *
+     * @return int Total token count, or 0 if unavailable
      */
     public function getTotalTokens(): int
     {

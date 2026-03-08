@@ -40,6 +40,11 @@ final class RateLimitMiddleware implements MiddlewareInterface
         $this->lastRefill = microtime(true);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws RuntimeException If the rate limit is exceeded
+     */
     public function process(AgentRequest $request, callable $next): Response
     {
         $this->refill();

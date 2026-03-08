@@ -19,6 +19,12 @@ namespace PapiAI\Core;
  */
 final class AgentJob
 {
+    /**
+     * @param string $agentClass Fully-qualified class name of the agent to run
+     * @param string $prompt The user prompt for the agent
+     * @param array<string, mixed> $options Agent run options
+     * @param string|null $callbackUrl Optional URL to POST results to when the job completes
+     */
     public function __construct(
         public readonly string $agentClass,
         public readonly string $prompt,
@@ -27,6 +33,11 @@ final class AgentJob
     ) {
     }
 
+    /**
+     * Serialize the job to an array for queue transport.
+     *
+     * @return array{agentClass: string, prompt: string, options: array, callbackUrl: string|null}
+     */
     public function toArray(): array
     {
         return [
@@ -37,6 +48,13 @@ final class AgentJob
         ];
     }
 
+    /**
+     * Deserialize a job from a queue-transported array.
+     *
+     * @param array{agentClass: string, prompt: string, options?: array, callbackUrl?: string|null} $data Serialised job data
+     *
+     * @return self The restored job
+     */
     public static function fromArray(array $data): self
     {
         return new self(

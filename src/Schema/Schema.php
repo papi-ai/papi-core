@@ -63,6 +63,8 @@ class Schema
 
     /**
      * Create a string schema.
+     *
+     * @return self A new string-typed schema instance
      */
     public static function string(): self
     {
@@ -71,6 +73,8 @@ class Schema
 
     /**
      * Create a number schema (float).
+     *
+     * @return self A new number-typed schema instance
      */
     public static function number(): self
     {
@@ -79,6 +83,8 @@ class Schema
 
     /**
      * Create an integer schema.
+     *
+     * @return self A new integer-typed schema instance
      */
     public static function integer(): self
     {
@@ -87,6 +93,8 @@ class Schema
 
     /**
      * Create a boolean schema.
+     *
+     * @return self A new boolean-typed schema instance
      */
     public static function boolean(): self
     {
@@ -97,6 +105,8 @@ class Schema
      * Create an array schema.
      *
      * @param Schema $items Schema for array items
+     *
+     * @return self A new array-typed schema with item validation
      */
     public static function array(Schema $items): self
     {
@@ -109,7 +119,9 @@ class Schema
     /**
      * Create an object schema.
      *
-     * @param array<string, Schema> $properties Object properties
+     * @param array<string, Schema> $properties Object properties (non-optional ones are required by default)
+     *
+     * @return self A new object-typed schema with property validation
      */
     public static function object(array $properties): self
     {
@@ -130,6 +142,8 @@ class Schema
      * Create an enum schema.
      *
      * @param array<string|int> $values Allowed values
+     *
+     * @return self A new enum-typed schema constraining values to the given set
      */
     public static function enum(array $values): self
     {
@@ -141,6 +155,8 @@ class Schema
 
     /**
      * Create a null schema.
+     *
+     * @return self A new null-typed schema
      */
     public static function null(): self
     {
@@ -148,7 +164,11 @@ class Schema
     }
 
     /**
-     * Add a description.
+     * Add a description to help LLMs understand the field's purpose.
+     *
+     * @param string $description Human-readable description
+     *
+     * @return self For method chaining
      */
     public function description(string $description): self
     {
@@ -158,7 +178,9 @@ class Schema
     }
 
     /**
-     * Make nullable.
+     * Allow null as a valid value for this schema.
+     *
+     * @return self For method chaining
      */
     public function nullable(): self
     {
@@ -168,7 +190,9 @@ class Schema
     }
 
     /**
-     * Make optional.
+     * Mark this property as optional (excluded from the required list in object schemas).
+     *
+     * @return self For method chaining
      */
     public function optional(): self
     {
@@ -178,7 +202,11 @@ class Schema
     }
 
     /**
-     * Set default value.
+     * Set a default value used when the property is absent.
+     *
+     * @param mixed $value The default value
+     *
+     * @return self For method chaining
      */
     public function default(mixed $value): self
     {
@@ -190,6 +218,10 @@ class Schema
 
     /**
      * Set minimum length (strings) or value (numbers).
+     *
+     * @param int|float $value Minimum length for strings, minimum value for numbers
+     *
+     * @return self For method chaining
      */
     public function min(int|float $value): self
     {
@@ -204,6 +236,10 @@ class Schema
 
     /**
      * Set maximum length (strings) or value (numbers).
+     *
+     * @param int|float $value Maximum length for strings, maximum value for numbers
+     *
+     * @return self For method chaining
      */
     public function max(int|float $value): self
     {
@@ -217,7 +253,11 @@ class Schema
     }
 
     /**
-     * Set regex pattern for strings.
+     * Set a regex pattern constraint for string values.
+     *
+     * @param string $pattern A valid regular expression pattern
+     *
+     * @return self For method chaining
      */
     public function pattern(string $pattern): self
     {
@@ -227,7 +267,11 @@ class Schema
     }
 
     /**
-     * Set minimum items for arrays.
+     * Set the minimum number of items for array schemas.
+     *
+     * @param int $count Minimum item count
+     *
+     * @return self For method chaining
      */
     public function minItems(int $count): self
     {
@@ -237,7 +281,11 @@ class Schema
     }
 
     /**
-     * Set maximum items for arrays.
+     * Set the maximum number of items for array schemas.
+     *
+     * @param int $count Maximum item count
+     *
+     * @return self For method chaining
      */
     public function maxItems(int $count): self
     {
@@ -248,6 +296,8 @@ class Schema
 
     /**
      * Get the schema type.
+     *
+     * @return SchemaType The primitive type of this schema
      */
     public function getType(): SchemaType
     {
@@ -256,6 +306,8 @@ class Schema
 
     /**
      * Check if this schema is optional.
+     *
+     * @return bool True if this property is not required in its parent object
      */
     public function isOptional(): bool
     {
@@ -263,7 +315,9 @@ class Schema
     }
 
     /**
-     * Convert to JSON Schema format.
+     * Convert to a standard JSON Schema array for use with LLM APIs.
+     *
+     * @return array<string, mixed> A JSON Schema-compliant representation
      */
     public function toJsonSchema(): array
     {
@@ -460,6 +514,10 @@ class Schema
     /**
      * Parse and validate a value, throwing on error.
      *
+     * @param mixed $value The value to validate and return
+     *
+     * @return mixed The validated value (unchanged)
+     *
      * @throws InvalidArgumentException If validation fails
      */
     public function parse(mixed $value): mixed
@@ -476,7 +534,11 @@ class Schema
     }
 
     /**
-     * Try to parse a value, returning null on error.
+     * Try to parse a value without throwing, returning null on validation failure.
+     *
+     * @param mixed $value The value to validate
+     *
+     * @return array{data: mixed}|null Array with validated data, or null if invalid
      */
     public function safeParse(mixed $value): ?array
     {

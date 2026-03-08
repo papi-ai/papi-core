@@ -26,6 +26,11 @@ use Psr\SimpleCache\CacheInterface;
  */
 final class CacheMiddleware implements MiddlewareInterface
 {
+    /**
+     * @param CacheInterface $cache PSR-16 simple cache instance
+     * @param int $ttl Time-to-live for cached responses in seconds
+     * @param string $prefix Cache key prefix to avoid collisions
+     */
     public function __construct(
         private readonly CacheInterface $cache,
         private readonly int $ttl = 3600,
@@ -33,6 +38,7 @@ final class CacheMiddleware implements MiddlewareInterface
     ) {
     }
 
+    /** {@inheritDoc} */
     public function process(AgentRequest $request, callable $next): Response
     {
         $key = $this->buildKey($request);
