@@ -1,6 +1,6 @@
 # PapiAI Core
 
-[![Tests](https://github.com/papi-ai/papi-core/workflows/CI/badge.svg)](https://github.com/papi-ai/papi-core/actions?query=workflow%3ACI)
+[![CI](https://github.com/papi-ai/papi-core/workflows/CI/badge.svg)](https://github.com/papi-ai/papi-core/actions?query=workflow%3ACI) [![Latest Version](https://img.shields.io/packagist/v/papi-ai/papi-core.svg)](https://packagist.org/packages/papi-ai/papi-core) [![Total Downloads](https://img.shields.io/packagist/dt/papi-ai/papi-core.svg)](https://packagist.org/packages/papi-ai/papi-core) [![PHP Version](https://img.shields.io/packagist/php-v/papi-ai/papi-core.svg)](https://packagist.org/packages/papi-ai/papi-core) [![License](https://img.shields.io/packagist/l/papi-ai/papi-core.svg)](https://packagist.org/packages/papi-ai/papi-core)
 
 A simple but powerful PHP library for building AI agents. Framework-agnostic, type-safe, and designed for real-world applications.
 
