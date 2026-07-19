@@ -282,10 +282,16 @@ final class Agent implements AgentInterface
     private function getProviderOptions(): array
     {
         $options = [
-            'model' => $this->model,
             'maxTokens' => $this->maxTokens,
             'temperature' => $this->temperature,
         ];
+
+        // Only forward the model when set; an empty string would otherwise defeat
+        // the provider's `$options['model'] ?? $defaultModel` fallback (which only
+        // catches null), sending a blank model to the API.
+        if ($this->model !== '') {
+            $options['model'] = $this->model;
+        }
 
         if (!empty($this->tools)) {
             $options['tools'] = array_values(array_map(

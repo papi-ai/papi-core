@@ -102,6 +102,28 @@ describe('Agent', function () {
             $agent->run('Hello');
         });
 
+        it('forwards the model to the provider when set', function () {
+            $this->mockProvider
+                ->expects('chat')
+                ->withArgs(fn ($messages, $options) => ($options['model'] ?? null) === 'test-model')
+                ->andReturn(new Response(text: 'OK'));
+
+            $agent = new Agent(provider: $this->mockProvider, model: 'test-model');
+
+            $agent->run('Hello');
+        });
+
+        it('omits an empty model so the provider default applies', function () {
+            $this->mockProvider
+                ->expects('chat')
+                ->withArgs(fn ($messages, $options) => !array_key_exists('model', $options))
+                ->andReturn(new Response(text: 'OK'));
+
+            $agent = new Agent(provider: $this->mockProvider, model: '');
+
+            $agent->run('Hello');
+        });
+
         it('executes tools when provider requests them', function () {
             $toolExecuted = false;
 
