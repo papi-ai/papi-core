@@ -37,6 +37,9 @@ final class ToolCall
     /**
      * Create from an Anthropic API tool_use content block.
      *
+     * @deprecated Provider mapping now lives in each provider package; construct ToolCall directly.
+     *   Kept for backward compatibility.
+     *
      * @param array{id: string, name: string, input?: array} $data Anthropic tool_use block
      *
      * @return self Parsed tool call
