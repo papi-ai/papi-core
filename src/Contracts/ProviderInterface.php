@@ -23,6 +23,22 @@ use PapiAI\Core\StreamChunk;
  *
  * Every AI provider (Anthropic, OpenAI, etc.) must implement this interface
  * to participate in the PapiAI ecosystem. Handles both synchronous and streaming chat.
+ *
+ * The chat options bag is defined once here as a reusable Psalm type; providers import it with
+ * `@psalm-import-type ChatOptions from ProviderInterface` so a new option never drifts across
+ * per-provider docblocks. `toolChoice` forces the answer channel: "auto" (the default when absent),
+ * "none", "required", or `["name" => "<tool>"]` to force a specific tool. Providers validate it
+ * (see PapiAI\Core\ToolChoice) and throw before any HTTP call when it cannot be met.
+ *
+ * @psalm-type ChatOptions = array{
+ *     model?: string,
+ *     tools?: array,
+ *     maxTokens?: int,
+ *     temperature?: float,
+ *     stopSequences?: array<string>,
+ *     outputSchema?: array,
+ *     toolChoice?: string|array{name: string},
+ * }
  */
 interface ProviderInterface
 {
@@ -30,14 +46,7 @@ interface ProviderInterface
      * Send a chat completion request.
      *
      * @param array<Message> $messages The conversation messages
-     * @param array{
-     *     model?: string,
-     *     tools?: array,
-     *     maxTokens?: int,
-     *     temperature?: float,
-     *     stopSequences?: array<string>,
-     *     outputSchema?: array,
-     * } $options Request options
+     * @param ChatOptions    $options  Request options (see the class docblock, incl. toolChoice)
      *
      * @return Response The completed response with text, tool calls, and usage stats
      */
