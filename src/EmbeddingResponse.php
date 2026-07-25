@@ -23,15 +23,24 @@ namespace PapiAI\Core;
 final class EmbeddingResponse
 {
     /**
+     * Token usage for the request.
+     *
+     * Typed as the neutral Usage value object; it is still array-accessible
+     * (`$response->usage['prompt_tokens']`) for backward compatibility.
+     */
+    public readonly Usage $usage;
+
+    /**
      * @param array<array<float>> $embeddings The embedding vectors
-     * @param string $model The model used
-     * @param array{prompt_tokens?: int, total_tokens?: int} $usage Token usage
+     * @param string              $model      The model used
+     * @param Usage|array         $usage      Token usage (a raw provider array is accepted and normalised)
      */
     public function __construct(
         public readonly array $embeddings,
         public readonly string $model,
-        public readonly array $usage = [],
+        Usage|array $usage = [],
     ) {
+        $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
     }
 
     /**
@@ -71,7 +80,7 @@ final class EmbeddingResponse
      */
     public function getPromptTokens(): int
     {
-        return $this->usage['prompt_tokens'] ?? 0;
+        return $this->usage->inputTokens;
     }
 
     /**
@@ -81,6 +90,6 @@ final class EmbeddingResponse
      */
     public function getTotalTokens(): int
     {
-        return $this->usage['total_tokens'] ?? 0;
+        return $this->usage->totalTokens;
     }
 }

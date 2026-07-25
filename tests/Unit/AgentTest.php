@@ -124,6 +124,33 @@ describe('Agent', function () {
             $agent->run('Hello');
         });
 
+        it('passes neutral tool definitions to the provider (not the Anthropic shape)', function () {
+            $tool = Tool::make(
+                name: 'lookup',
+                description: 'Look something up',
+                parameters: ['query' => ['type' => 'string', 'description' => 'the query']],
+                handler: fn () => 'ok',
+            );
+
+            $this->mockProvider
+                ->expects('chat')
+                ->withArgs(function ($messages, $options) use ($tool) {
+                    $def = $options['tools'][0] ?? [];
+
+                    return $def === [
+                        'name' => 'lookup',
+                        'description' => 'Look something up',
+                        'parameters' => $tool->getParameterSchema(),
+                    ]
+                    && !array_key_exists('input_schema', $def);
+                })
+                ->andReturn(new Response(text: 'OK'));
+
+            $agent = new Agent(provider: $this->mockProvider, model: 'test-model', tools: [$tool]);
+
+            $agent->run('Hi');
+        });
+
         it('executes tools when provider requests them', function () {
             $toolExecuted = false;
 

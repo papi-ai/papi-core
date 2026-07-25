@@ -23,21 +23,30 @@ namespace PapiAI\Core;
 final class Response
 {
     /**
-     * @param string $text The text response from the LLM
-     * @param array|null $data Parsed structured data (if output schema was used)
-     * @param array<ToolCall> $toolCalls Tool calls made by the LLM
-     * @param array<Message> $messages Full conversation history
-     * @param array $usage Token usage statistics
-     * @param string|null $stopReason Why the response ended
+     * Token usage for the request.
+     *
+     * Typed as the neutral Usage value object; it is still array-accessible
+     * (`$response->usage['input_tokens']`) for backward compatibility.
+     */
+    public readonly Usage $usage;
+
+    /**
+     * @param string          $text       The text response from the LLM
+     * @param array|null      $data       Parsed structured data (if output schema was used)
+     * @param array<ToolCall> $toolCalls  Tool calls made by the LLM
+     * @param array<Message>  $messages   Full conversation history
+     * @param Usage|array     $usage      Token usage (a raw provider array is accepted and normalised)
+     * @param string|null     $stopReason Why the response ended
      */
     public function __construct(
         public readonly string $text,
         public readonly ?array $data = null,
         public readonly array $toolCalls = [],
         public readonly array $messages = [],
-        public readonly array $usage = [],
+        Usage|array $usage = [],
         public readonly ?string $stopReason = null,
     ) {
+        $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
     }
 
     /**
@@ -67,7 +76,7 @@ final class Response
      */
     public function getInputTokens(): int
     {
-        return $this->usage['input_tokens'] ?? 0;
+        return $this->usage->inputTokens;
     }
 
     /**
@@ -77,7 +86,7 @@ final class Response
      */
     public function getOutputTokens(): int
     {
-        return $this->usage['output_tokens'] ?? 0;
+        return $this->usage->outputTokens;
     }
 
     /**
@@ -87,11 +96,14 @@ final class Response
      */
     public function getTotalTokens(): int
     {
-        return $this->getInputTokens() + $this->getOutputTokens();
+        return $this->usage->totalTokens;
     }
 
     /**
      * Create from an Anthropic API response payload.
+     *
+     * @deprecated Response mapping now lives in each provider package (see AnthropicProvider); build a
+     *   Response with the neutral constructor instead. Kept for backward compatibility.
      *
      * @param array $response Raw Anthropic API response
      * @param array<Message> $messages Conversation history to attach

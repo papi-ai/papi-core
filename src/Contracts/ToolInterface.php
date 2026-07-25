@@ -18,8 +18,8 @@ namespace PapiAI\Core\Contracts;
  * Contract for tools that can be invoked by an LLM agent.
  *
  * Tools expose a name, description, and parameter schema so the LLM can decide
- * when and how to call them. Implementations must be serialisable to both
- * Anthropic and OpenAI API formats.
+ * when and how to call them. Each provider translates that neutral definition
+ * into its own wire format.
  */
 interface ToolInterface
 {
@@ -52,18 +52,4 @@ interface ToolInterface
      * @return mixed The tool result
      */
     public function execute(array $arguments, mixed $context = null): mixed;
-
-    /**
-     * Convert to Anthropic API tool format.
-     *
-     * @return array{name: string, description: string, input_schema: array}
-     */
-    public function toAnthropic(): array;
-
-    /**
-     * Convert to OpenAI API tool format.
-     *
-     * @return array{type: string, function: array{name: string, description: string, parameters: array}}
-     */
-    public function toOpenAI(): array;
 }

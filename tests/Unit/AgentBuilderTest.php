@@ -44,7 +44,8 @@ describe('AgentBuilder', function () {
     it('accepts tools', function () {
         $tool = Mockery::mock(ToolInterface::class);
         $tool->allows('getName')->andReturn('test_tool');
-        $tool->allows('toAnthropic')->andReturn([]);
+        $tool->allows('getDescription')->andReturn('A test tool');
+        $tool->allows('getParameterSchema')->andReturn(['type' => 'object', 'properties' => []]);
 
         $this->provider->expects('chat')->andReturn(new Response(text: 'OK'));
 

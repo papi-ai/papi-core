@@ -294,8 +294,13 @@ final class Agent implements AgentInterface
         }
 
         if (!empty($this->tools)) {
+            // Pass a neutral tool definition; each provider formats it to its own wire shape.
             $options['tools'] = array_values(array_map(
-                fn (ToolInterface $tool) => $tool->toAnthropic(),
+                fn (ToolInterface $tool) => [
+                    'name' => $tool->getName(),
+                    'description' => $tool->getDescription(),
+                    'parameters' => $tool->getParameterSchema(),
+                ],
                 $this->tools
             ));
         }

@@ -209,7 +209,12 @@ final class Tool implements ToolInterface
     }
 
     /**
-     * Convert to format expected by Anthropic API.
+     * Convert to the format expected by the Anthropic API.
+     *
+     * @deprecated Tool wire formatting now lives in each provider package; the Agent passes a neutral
+     *   definition (name, description, parameters) and the provider formats it. Kept for BC.
+     *
+     * @return array{name: string, description: string, input_schema: array}
      */
     public function toAnthropic(): array
     {
@@ -221,7 +226,12 @@ final class Tool implements ToolInterface
     }
 
     /**
-     * Convert to format expected by OpenAI API.
+     * Convert to the format expected by the OpenAI API.
+     *
+     * @deprecated Tool wire formatting now lives in each provider package; the Agent passes a neutral
+     *   definition (name, description, parameters) and the provider formats it. Kept for BC.
+     *
+     * @return array{type: string, function: array{name: string, description: string, parameters: array}}
      */
     public function toOpenAI(): array
     {
