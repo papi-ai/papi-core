@@ -3,7 +3,7 @@
 Install the core package and the provider(s) you need:
 
 ```bash
-composer require papi-ai/core
+composer require papi-ai/papi-core
 
 # Pick your provider(s)
 composer require papi-ai/anthropic   # Claude
@@ -22,6 +22,20 @@ For text-to-speech:
 
 ```bash
 composer require papi-ai/elevenlabs  # ElevenLabs TTS
+```
+
+Framework bridges, if you are not using Papi standalone:
+
+```bash
+composer require papi-ai/laravel     # Laravel service provider, config, facade
+composer require papi-ai/symfony     # Symfony bundle, DI, Messenger
+```
+
+Optional extras:
+
+```bash
+composer require papi-ai/effect      # Async video and fiber-based execution
+composer require papi-ai/rtk         # Token-optimisation proxy (needs the rtk binary)
 ```
 
 ## Requirements
