@@ -41,6 +41,17 @@ describe('OptimisationResult', function () {
     it('returns zero percent when there is nothing to measure', function () {
         $result = new OptimisationResult('', 0, 0);
 
+        expect($result->isMeasured())->toBeTrue();
         expect($result->savingsPercent())->toBe(0.0);
+    });
+
+    it('reports an unmeasured baseline as unknown rather than zero', function () {
+        $result = new OptimisationResult('compact', null, 40, 'rtk:command');
+
+        expect($result->isMeasured())->toBeFalse();
+        expect($result->tokensBefore)->toBeNull();
+        expect($result->tokensSaved())->toBeNull();
+        expect($result->savingsPercent())->toBeNull();
+        expect($result->tokensAfter)->toBe(40);
     });
 });

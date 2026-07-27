@@ -20,44 +20,65 @@ namespace PapiAI\Core;
  * Holds the optimised text alongside the estimated token counts before and after, so callers
  * can decide whether the saving was worthwhile and report on it. Token counts are estimates,
  * not the output of a real tokenizer.
+ *
+ * The baseline can be unknown: measuring it means processing (or running) the content twice, so
+ * a caller may opt out. `$tokensBefore` is then null and the saving is unreportable rather than
+ * reported as zero.
  */
 final class OptimisationResult
 {
     /**
-     * @param string $optimised    The optimised (compressed) text
-     * @param int    $tokensBefore Estimated tokens in the original content
-     * @param int    $tokensAfter  Estimated tokens in the optimised content
-     * @param string $strategy     Identifier of the strategy used (e.g. "rtk:pipe", "rtk:command")
+     * @param string   $optimised    The optimised (compressed) text
+     * @param int|null $tokensBefore Estimated tokens in the original content, or null if unmeasured
+     * @param int      $tokensAfter  Estimated tokens in the optimised content
+     * @param string   $strategy     Identifier of the strategy used (e.g. "rtk:pipe", "rtk:command")
      */
     public function __construct(
         public readonly string $optimised,
-        public readonly int $tokensBefore,
+        public readonly ?int $tokensBefore,
         public readonly int $tokensAfter,
         public readonly string $strategy = '',
     ) {
     }
 
     /**
+     * Whether the original content was measured, and so whether a saving can be reported.
+     */
+    public function isMeasured(): bool
+    {
+        return $this->tokensBefore !== null;
+    }
+
+    /**
      * Number of tokens saved (never negative).
      *
-     * @return int The estimated tokens saved
+     * @return int|null The estimated tokens saved, or null when the baseline was not measured
      */
-    public function tokensSaved(): int
+    public function tokensSaved(): ?int
     {
+        if ($this->tokensBefore === null) {
+            return null;
+        }
+
         return max(0, $this->tokensBefore - $this->tokensAfter);
     }
 
     /**
      * Percentage of tokens saved, rounded to one decimal place.
      *
-     * @return float The saving as a percentage, or 0.0 when there was nothing to save
+     * @return float|null The saving as a percentage, 0.0 when there was nothing to save, or null
+     *                    when the baseline was not measured
      */
-    public function savingsPercent(): float
+    public function savingsPercent(): ?float
     {
+        if ($this->tokensBefore === null) {
+            return null;
+        }
+
         if ($this->tokensBefore <= 0) {
             return 0.0;
         }
 
-        return round($this->tokensSaved() / $this->tokensBefore * 100, 1);
+        return round((int) $this->tokensSaved() / $this->tokensBefore * 100, 1);
     }
 }
