@@ -30,6 +30,12 @@ use PapiAI\Core\StreamChunk;
  * "none", "required", or `["name" => "<tool>"]` to force a specific tool. Providers validate it
  * (see PapiAI\Core\ToolChoice) and throw before any HTTP call when it cannot be met.
  *
+ * `effort` asks the model to think harder before answering: "low", "medium" or "high" (see
+ * PapiAI\Core\Effort). Every reasoning provider spells this differently, so each translates the
+ * level to its own knob. Providers with no such knob ignore it, documented per provider. That is
+ * deliberate and unlike `toolChoice`: effort is a hint about quality, so ignoring it degrades
+ * nothing the caller was promised, whereas ignoring a forced tool would break a guarantee.
+ *
  * @psalm-type ChatOptions = array{
  *     model?: string,
  *     tools?: array,
@@ -38,6 +44,7 @@ use PapiAI\Core\StreamChunk;
  *     stopSequences?: array<string>,
  *     outputSchema?: array,
  *     toolChoice?: string|array{name: string},
+ *     effort?: string,
  * }
  */
 interface ProviderInterface
