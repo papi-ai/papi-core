@@ -119,11 +119,19 @@ final class Agent implements AgentInterface
      * Sends the prompt through any middleware, then iterates: call the LLM,
      * execute tool calls, feed results back, until a final response or max turns.
      *
+     * `toolChoice` forces the **opening** call only, after which the model is free again. Forcing
+     * every turn would leave it unable to answer in plain text, so the loop could only ever end by
+     * exhausting `maxTurns`. Check the provider implements
+     * {@see \PapiAI\Core\Contracts\ToolSelectableInterface} (or
+     * {@see \PapiAI\Core\Contracts\NamedToolSelectableInterface} to name a tool) before asking, or
+     * a provider that cannot honour it will throw.
+     *
      * @param string $prompt The user prompt
      * @param array{
      *     outputSchema?: Schema,
      *     context?: mixed,
      *     maxTurns?: int,
+     *     toolChoice?: string|array{name: string},
      * } $options Run options
      *
      * @return Response The final agent response
@@ -166,6 +174,8 @@ final class Agent implements AgentInterface
         $maxTurns = $options['maxTurns'] ?? $this->maxTurns;
         $context = $options['context'] ?? null;
         $outputSchema = $options['outputSchema'] ?? null;
+        $toolChoice = $options['toolChoice'] ?? null;
+        $effort = $options['effort'] ?? null;
 
         // Add system message
         if ($this->instructions !== '') {
@@ -177,7 +187,10 @@ final class Agent implements AgentInterface
 
         // Agentic loop
         for ($turn = 0; $turn < $maxTurns; $turn++) {
-            $response = $this->callProvider($messages, $outputSchema);
+            // Forced choice opens the conversation, then the model is free again. Forcing it every
+            // turn would leave the model unable to answer in plain text, so the loop could only ever
+            // end by exhausting maxTurns and throwing.
+            $response = $this->callProvider($messages, $outputSchema, $turn === 0 ? $toolChoice : null, $effort);
 
             // Add assistant message to history
             $messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
@@ -212,7 +225,11 @@ final class Agent implements AgentInterface
         }
         $messages[] = Message::user($prompt);
 
-        foreach ($this->provider->stream($messages, $this->getProviderOptions()) as $chunk) {
+        // No agentic loop here, so a forced choice applies to the one call without any risk of
+        // trapping the model into calling a tool forever.
+        $providerOptions = $this->providerOptionsWith($options['toolChoice'] ?? null, $options['effort'] ?? null);
+
+        foreach ($this->provider->stream($messages, $providerOptions) as $chunk) {
             yield $chunk;
         }
     }
@@ -227,6 +244,8 @@ final class Agent implements AgentInterface
         $messages = [];
         $maxTurns = $options['maxTurns'] ?? $this->maxTurns;
         $context = $options['context'] ?? null;
+        $toolChoice = $options['toolChoice'] ?? null;
+        $effort = $options['effort'] ?? null;
 
         if ($this->instructions !== '') {
             $messages[] = Message::system($this->instructions);
@@ -234,15 +253,19 @@ final class Agent implements AgentInterface
         $messages[] = Message::user($prompt);
 
         for ($turn = 0; $turn < $maxTurns; $turn++) {
+            // Opening turn only, for the same reason as run(): a permanently forced tool leaves the
+            // model unable to finish.
+            $turnChoice = $turn === 0 ? $toolChoice : null;
+
             // Stream the response
-            foreach ($this->provider->stream($messages, $this->getProviderOptions()) as $chunk) {
+            foreach ($this->provider->stream($messages, $this->providerOptionsWith($turnChoice, $effort)) as $chunk) {
                 if ($chunk->text !== '') {
                     yield StreamEvent::text($chunk->text);
                 }
             }
 
             // Get the complete response to check for tool calls
-            $response = $this->callProvider($messages);
+            $response = $this->callProvider($messages, null, $turnChoice, $effort);
             $messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
 
             if (!$response->hasToolCalls()) {
@@ -268,15 +291,41 @@ final class Agent implements AgentInterface
     /**
      * Call the provider with current messages.
      */
-    private function callProvider(array $messages, ?Schema $outputSchema = null): Response
-    {
-        $options = $this->getProviderOptions();
+    private function callProvider(
+        array $messages,
+        ?Schema $outputSchema = null,
+        string|array|null $toolChoice = null,
+        ?string $effort = null,
+    ): Response {
+        $options = $this->providerOptionsWith($toolChoice, $effort);
 
         if ($outputSchema !== null && $this->provider->supportsStructuredOutput()) {
             $options['outputSchema'] = $outputSchema->toJsonSchema();
         }
 
         return $this->provider->chat($messages, $options);
+    }
+
+    /**
+     * Provider options, with a forced tool choice folded in when the caller asked for one.
+     *
+     * @param string|array{name: string}|null $toolChoice The caller's choice, or null to leave it to the model
+     *
+     * @return array<string, mixed> Options ready for the provider
+     */
+    private function providerOptionsWith(string|array|null $toolChoice, ?string $effort = null): array
+    {
+        $options = $this->getProviderOptions();
+
+        if ($toolChoice !== null) {
+            $options['toolChoice'] = $toolChoice;
+        }
+
+        if ($effort !== null) {
+            $options['effort'] = $effort;
+        }
+
+        return $options;
     }
 
     /**
