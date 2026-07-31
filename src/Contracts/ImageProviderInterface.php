@@ -25,11 +25,14 @@ interface ImageProviderInterface
     /**
      * Generate images from a text prompt.
      *
+     * Providers name their own sizes, so `imageSize` is whatever string the provider
+     * understands: "1K", "2K" and "4K" on Google, "1024x1024" on OpenAI.
+     *
      * @param string $prompt The image generation prompt
      * @param array{
      *     model?: string,
      *     aspectRatio?: string,
-     *     imageSize?: int,
+     *     imageSize?: string,
      *     numberOfImages?: int,
      * } $options Provider-specific options
      * @return array{images: array<array{mimeType: string, data: string}>}
@@ -44,7 +47,7 @@ interface ImageProviderInterface
      * @param array{
      *     model?: string,
      *     aspectRatio?: string,
-     *     imageSize?: int,
+     *     imageSize?: string,
      * } $options Provider-specific options
      * @return array{images: array<array{mimeType: string, data: string}>, text: string}
      */
