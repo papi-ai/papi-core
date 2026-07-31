@@ -264,15 +264,15 @@ use PapiAI\Google\GoogleProvider;
 
 $provider = new GoogleProvider(
     apiKey: $_ENV['GOOGLE_API_KEY'],
-    defaultModel: GoogleProvider::MODEL_3_0_PRO,
+    defaultModel: GoogleProvider::MODEL_3_6_FLASH,
 );
 
 // Available models
-GoogleProvider::MODEL_3_1_PRO   // gemini-3.1-pro
-GoogleProvider::MODEL_3_0_PRO   // gemini-3.0-pro
-GoogleProvider::MODEL_2_0_FLASH // gemini-2.0-flash-exp
-GoogleProvider::MODEL_1_5_PRO   // gemini-1.5-pro
-GoogleProvider::MODEL_1_5_FLASH // gemini-1.5-flash
+GoogleProvider::MODEL_3_6_FLASH // gemini-3.6-flash (default)
+GoogleProvider::MODEL_3_5_FLASH // gemini-3.5-flash
+GoogleProvider::MODEL_3_1_PRO   // gemini-3.1-pro-preview
+GoogleProvider::MODEL_2_5_PRO   // gemini-2.5-pro
+GoogleProvider::MODEL_2_0_FLASH // gemini-2.0-flash
 ```
 
 ## Creating Custom Providers
