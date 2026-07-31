@@ -50,7 +50,10 @@ final class Agent implements AgentInterface
      * @param array<ToolInterface> $tools Available tools
      * @param array<string, Closure> $hooks Event hooks
      * @param int $maxTokens Max tokens in response
-     * @param float $temperature Temperature for generation
+     * @param float|null $temperature Temperature for generation, or null to leave it to the model.
+     *   Defaults to null on purpose: Anthropic returns a 400 for a non-default temperature on
+     *   Claude 4.7 and later, and Google has deprecated it, so an agent that invents a value
+     *   nobody asked for would break those models outright.
      * @param int $maxTurns Max agentic turns (tool call loops)
      * @param array<MiddlewareInterface> $middleware Middleware pipeline
      */
@@ -61,7 +64,7 @@ final class Agent implements AgentInterface
         array $tools = [],
         array $hooks = [],
         private readonly int $maxTokens = 4096,
-        private readonly float $temperature = 0.7,
+        private readonly ?float $temperature = null,
         private readonly int $maxTurns = 10,
         array $middleware = [],
     ) {
@@ -281,10 +284,13 @@ final class Agent implements AgentInterface
      */
     private function getProviderOptions(): array
     {
-        $options = [
-            'maxTokens' => $this->maxTokens,
-            'temperature' => $this->temperature,
-        ];
+        $options = ['maxTokens' => $this->maxTokens];
+
+        // Only when the caller actually chose one. See the constructor docblock: several current
+        // models reject a temperature they did not ask for.
+        if ($this->temperature !== null) {
+            $options['temperature'] = $this->temperature;
+        }
 
         // Only forward the model when set; an empty string would otherwise defeat
         // the provider's `$options['model'] ?? $defaultModel` fallback (which only

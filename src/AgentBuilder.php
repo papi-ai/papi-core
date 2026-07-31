@@ -41,7 +41,11 @@ final class AgentBuilder
 
     private int $maxTokens = 4096;
 
-    private float $temperature = 0.7;
+    /**
+     * Null until the caller chooses one, so nothing is sent that the model did not ask for.
+     * See {@see Agent::__construct()} for why inventing a default breaks current models.
+     */
+    private ?float $temperature = null;
 
     private int $maxTurns = 10;
 
