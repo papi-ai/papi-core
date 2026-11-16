@@ -1,0 +1,9 @@
+{
+    "name": "acme/missing-class",
+    "type": "papi-provider",
+    "extra": {
+        "papi": {
+            "factory": "Acme\\Missing\\Factory"
+        }
+    }
+}

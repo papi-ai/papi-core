@@ -36,7 +36,8 @@ final class Response
      * @param array<ToolCall> $toolCalls  Tool calls made by the LLM
      * @param array<Message>  $messages   Full conversation history
      * @param Usage|array     $usage      Token usage (a raw provider array is accepted and normalised)
-     * @param string|null     $stopReason Why the response ended
+     * @param string|null     $stopReason     Why the response ended, in the provider's own words
+     * @param StopReason      $stoppedBecause Why the response ended, in the same words for every provider
      */
     public function __construct(
         public readonly string $text,
@@ -45,6 +46,7 @@ final class Response
         public readonly array $messages = [],
         Usage|array $usage = [],
         public readonly ?string $stopReason = null,
+        public readonly StopReason $stoppedBecause = StopReason::Other,
     ) {
         $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
     }
@@ -57,6 +59,14 @@ final class Response
     public function hasToolCalls(): bool
     {
         return !empty($this->toolCalls);
+    }
+
+    /**
+     * Whether the output ceiling cut the answer short.
+     */
+    public function isTruncated(): bool
+    {
+        return $this->stoppedBecause === StopReason::MaxTokens;
     }
 
     /**
@@ -129,6 +139,13 @@ final class Response
             messages: $messages,
             usage: $response['usage'] ?? [],
             stopReason: $response['stop_reason'] ?? null,
+            stoppedBecause: match ($response['stop_reason'] ?? null) {
+                'end_turn', 'stop_sequence' => StopReason::Stop,
+                'max_tokens', 'model_context_window_exceeded' => StopReason::MaxTokens,
+                'tool_use' => StopReason::ToolCalls,
+                'refusal' => StopReason::Refused,
+                default => StopReason::Other,
+            },
         );
     }
 
@@ -156,6 +173,13 @@ final class Response
             messages: $messages,
             usage: $response['usage'] ?? [],
             stopReason: $choice['finish_reason'] ?? null,
+            stoppedBecause: $toolCalls !== [] ? StopReason::ToolCalls : match ($choice['finish_reason'] ?? null) {
+                'stop' => StopReason::Stop,
+                'length', 'model_length' => StopReason::MaxTokens,
+                'tool_calls', 'function_call' => StopReason::ToolCalls,
+                'content_filter' => StopReason::Refused,
+                default => StopReason::Other,
+            },
         );
     }
 
@@ -175,6 +199,25 @@ final class Response
             messages: $this->messages,
             usage: $this->usage,
             stopReason: $this->stopReason,
+            stoppedBecause: $this->stoppedBecause,
+        );
+    }
+
+    /**
+     * Return a new Response carrying a different conversation history.
+     *
+     * @param array<Message> $messages
+     */
+    public function withMessages(array $messages): self
+    {
+        return new self(
+            text: $this->text,
+            data: $this->data,
+            toolCalls: $this->toolCalls,
+            messages: $messages,
+            usage: $this->usage,
+            stopReason: $this->stopReason,
+            stoppedBecause: $this->stoppedBecause,
         );
     }
 }

@@ -407,13 +407,7 @@ final class Agent implements AgentInterface
     private function finalizeResponse(Response $response, array $messages, ?Schema $outputSchema): Response
     {
         if ($outputSchema === null) {
-            return new Response(
-                text: $response->text,
-                toolCalls: $response->toolCalls,
-                messages: $messages,
-                usage: $response->usage,
-                stopReason: $response->stopReason,
-            );
+            return $response->withMessages($messages);
         }
 
         // Try to parse JSON from the response
@@ -441,13 +435,6 @@ final class Agent implements AgentInterface
         // Validate against schema
         $outputSchema->parse($data);
 
-        return new Response(
-            text: $response->text,
-            data: $data,
-            toolCalls: $response->toolCalls,
-            messages: $messages,
-            usage: $response->usage,
-            stopReason: $response->stopReason,
-        );
+        return $response->withMessages($messages)->withData($data);
     }
 }

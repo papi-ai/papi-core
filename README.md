@@ -35,7 +35,7 @@ use PapiAI\Anthropic\AnthropicProvider;
 
 $agent = new Agent(
     provider: new AnthropicProvider(apiKey: $_ENV['ANTHROPIC_API_KEY']),
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     instructions: 'You are a helpful assistant.',
 );
 
@@ -63,7 +63,7 @@ $weatherTool = Tool::make(
 
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: [$weatherTool],
 );
 
@@ -96,7 +96,7 @@ class WebTools
 
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: Tool::fromClass(WebTools::class),
 );
 ```
@@ -189,7 +189,7 @@ Add observability to your agent:
 ```php
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: $tools,
     hooks: [
         'beforeToolCall' => function (string $name, array $input) {
@@ -229,17 +229,41 @@ $conversation->addUser('Tell me a joke');
 $messages = $conversation->getMessages();
 ```
 
+## Why a Response Stopped
+
+Every provider reports why the model stopped in the same words:
+
+```php
+use PapiAI\Core\StopReason;
+
+$response = $agent->run('Summarise this repository');
+
+if ($response->isTruncated()) {
+    // The output ceiling cut the answer short: raise maxTokens and ask again.
+}
+
+match ($response->stoppedBecause) {
+    StopReason::Stop => 'finished',
+    StopReason::ToolCalls => 'wants tools run',
+    StopReason::MaxTokens => 'cut short',
+    StopReason::Refused => 'declined or filtered',
+    StopReason::Other => 'something else',
+};
+```
+
+The provider's own string is still on `$response->stopReason`.
+
 ## Configuration Options
 
 ```php
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     instructions: 'System prompt here',
     tools: [...],
     hooks: [...],
     maxTokens: 4096,        // Max response tokens
-    temperature: 0.7,       // 0.0 = deterministic, 1.0 = creative
+    temperature: 0.7,       // Only on models that still take it; current Claude and Gemini refuse it
     maxTurns: 10,           // Max tool-use loops before stopping
 );
 ```
@@ -253,7 +277,7 @@ use PapiAI\Anthropic\AnthropicProvider;
 
 $provider = new AnthropicProvider(
     apiKey: $_ENV['ANTHROPIC_API_KEY'],
-    defaultModel: 'claude-sonnet-4-20250514',
+    defaultModel: 'claude-sonnet-5-5',
 );
 ```
 
@@ -264,16 +288,43 @@ use PapiAI\Google\GoogleProvider;
 
 $provider = new GoogleProvider(
     apiKey: $_ENV['GOOGLE_API_KEY'],
-    defaultModel: GoogleProvider::MODEL_3_6_FLASH,
+    defaultModel: GoogleProvider::MODEL_3_8_FLASH,
 );
 
-// Available models
-GoogleProvider::MODEL_3_6_FLASH // gemini-3.6-flash (default)
-GoogleProvider::MODEL_3_5_FLASH // gemini-3.5-flash
-GoogleProvider::MODEL_3_1_PRO   // gemini-3.1-pro-preview
-GoogleProvider::MODEL_2_5_PRO   // gemini-2.5-pro
-GoogleProvider::MODEL_2_0_FLASH // gemini-2.0-flash
+// Some of the available models
+GoogleProvider::MODEL_4_HYDROGEN // gemini-4-hydrogen
+GoogleProvider::MODEL_4_CARBON   // gemini-4-carbon
+GoogleProvider::MODEL_3_8_FLASH  // gemini-3.8-flash (default)
+GoogleProvider::MODEL_3_1_PRO    // gemini-3.1-pro-preview
+GoogleProvider::MODEL_2_5_PRO    // gemini-2.5-pro
 ```
+
+### Choosing a Provider by Name
+
+An application that lets its users pick a provider in configuration does not need to know any
+provider's class or constructor. Every provider package ships a factory, and `ComposerDiscovery`
+finds the ones that are installed:
+
+```php
+use PapiAI\Core\Factory\ComposerDiscovery;
+use PapiAI\Core\Factory\ProviderRegistry;
+
+$registry = new ProviderRegistry(new ComposerDiscovery());
+
+$provider = $registry->create('google', ['api_key' => $_ENV['GOOGLE_API_KEY']]);
+
+foreach ($registry->installed() as $factory) {
+    echo $factory->package(), ': ', $factory->name(), "\n";
+
+    foreach ($factory->settings() as $setting) {
+        echo '  ', $setting->name, $setting->required ? ' (required)' : '', ': ', $setting->description, "\n";
+    }
+}
+```
+
+Setting names are snake_case (`api_key`, `base_url`, `model`, `max_tokens`, `effort`). A missing,
+unknown or mistyped setting throws `ConfigurationException`, an `InvalidArgumentException`, before
+any request is made. The registry accepts any list of factories, so tests can hand it their own.
 
 ## Creating Custom Providers
 
@@ -299,6 +350,41 @@ class MyProvider implements ProviderInterface
     public function supportsVision(): bool { return true; }
     public function supportsStructuredOutput(): bool { return false; }
     public function getName(): string { return 'my-provider'; }
+}
+```
+
+To make it discoverable by name, ship a factory with it. Extend `AbstractProviderFactory`,
+declare your settings, and build the provider from them:
+
+```php
+use PapiAI\Core\Contracts\ProviderInterface;
+use PapiAI\Core\Factory\AbstractProviderFactory;
+use PapiAI\Core\Factory\Setting;
+use PapiAI\Core\Factory\SettingValues;
+
+final class MyProviderFactory extends AbstractProviderFactory
+{
+    public function name(): string { return 'my-provider'; }
+    public function package(): string { return 'acme/my-provider'; }
+
+    public function settings(): array
+    {
+        return [new Setting('api_key', true, 'My API key')];
+    }
+
+    protected function build(SettingValues $values): ProviderInterface
+    {
+        return new MyProvider($values->string('api_key'));
+    }
+}
+```
+
+Then declare the package type and the factory in its `composer.json`:
+
+```json
+{
+    "type": "papi-provider",
+    "extra": {"papi": {"factory": "Acme\\MyProviderFactory"}}
 }
 ```
 

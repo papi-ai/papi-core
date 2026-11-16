@@ -1,0 +1,9 @@
+{
+    "name": "acme/provider",
+    "type": "papi-provider",
+    "extra": {
+        "papi": {
+            "factory": "PapiAI\\Core\\Tests\\Fixtures\\FakeProviderFactory"
+        }
+    }
+}
