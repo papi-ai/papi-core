@@ -20,7 +20,7 @@ $weatherTool = Tool::make(
 
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: [$weatherTool],
 );
 
@@ -53,7 +53,7 @@ class WebTools
 
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: Tool::fromClass(WebTools::class),
 );
 ```
@@ -143,7 +143,7 @@ Add observability to your agent:
 ```php
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     tools: $tools,
     hooks: [
         'beforeToolCall' => function (string $name, array $input) {
@@ -171,7 +171,7 @@ use PapiAI\Core\Middleware\CacheMiddleware;
 
 $agent = Agent::build()
     ->provider($provider)
-    ->model('claude-sonnet-4-20250514')
+    ->model('claude-sonnet-5-5')
     ->addMiddleware(new RetryMiddleware(maxRetries: 3))
     ->addMiddleware(new RateLimitMiddleware(maxRequests: 60, perSeconds: 60))
     ->addMiddleware(new LoggingMiddleware($psrLogger))
@@ -201,12 +201,12 @@ $messages = $conversation->getMessages();
 ```php
 $agent = new Agent(
     provider: $provider,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5-5',
     instructions: 'System prompt here',
     tools: [...],
     hooks: [...],
     maxTokens: 4096,        // Max response tokens
-    temperature: 0.7,       // 0.0 = deterministic, 1.0 = creative
+    temperature: 0.7,       // Only on models that still take it; current Claude and Gemini refuse it
     maxTurns: 10,           // Max tool-use loops before stopping
 );
 ```

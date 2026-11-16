@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "composer-runtime-api": "^2.0"
     },
     "suggest": {
         "psr/log": "Required for LoggingMiddleware (^3.0)",
