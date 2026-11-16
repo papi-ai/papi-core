@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace PapiAI\Core;
 
+use JsonException;
+
 /**
  * Immutable value object representing a tool invocation requested by an LLM.
  *
@@ -67,6 +69,27 @@ final class ToolCall
             name: $data['function']['name'],
             arguments: json_decode($data['function']['arguments'], true) ?? [],
         );
+    }
+
+    /**
+     * The arguments as the JSON object every provider's history expects: `{}` when there are none.
+     *
+     * Decoded JSON loses the difference between an empty object and an empty list, so re-encoding
+     * $arguments directly would send `[]`, which providers reject or misread.
+     *
+     * @throws JsonException When an argument cannot be encoded
+     */
+    public function argumentsAsJson(): string
+    {
+        return json_encode($this->argumentsAsObject(), JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The arguments as an object, for a payload that embeds them rather than sending a string.
+     */
+    public function argumentsAsObject(): object
+    {
+        return (object) $this->arguments;
     }
 
     /**
