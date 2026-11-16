@@ -193,6 +193,49 @@ describe('Agent', function () {
             expect($response->text)->toBe('The data is 42.');
         });
 
+        it('hands the provider back what it left on the previous turn', function () {
+            $tool = Tool::make(name: 'get_data', description: 'Get some data', parameters: [], handler: fn () => 42);
+            $replay = ['mock' => [['type' => 'opaque', 'data' => 'state']]];
+
+            $this->mockProvider
+                ->expects('chat')
+                ->twice()
+                ->andReturnUsing(
+                    fn () => new Response(text: '', toolCalls: [new ToolCall('call_1', 'get_data', [])], replay: $replay),
+                    function (array $messages) use ($replay) {
+                        expect($messages[1]->replayFor('mock'))->toBe($replay['mock']);
+
+                        return new Response(text: 'The data is 42.');
+                    },
+                );
+
+            $agent = new Agent(provider: $this->mockProvider, model: 'test-model', tools: [$tool]);
+
+            expect($agent->run('Get the data')->text)->toBe('The data is 42.');
+        });
+
+        it('hands the provider back what it left when streaming events too', function () {
+            $tool = Tool::make(name: 'get_data', description: 'Get some data', parameters: [], handler: fn () => 42);
+            $replay = ['mock' => [['type' => 'opaque', 'data' => 'state']]];
+
+            $this->mockProvider->allows('stream')->andReturn([]);
+            $this->mockProvider
+                ->expects('chat')
+                ->twice()
+                ->andReturnUsing(
+                    fn () => new Response(text: '', toolCalls: [new ToolCall('call_1', 'get_data', [])], replay: $replay),
+                    function (array $messages) use ($replay) {
+                        expect($messages[1]->replayFor('mock'))->toBe($replay['mock']);
+
+                        return new Response(text: 'The data is 42.');
+                    },
+                );
+
+            $agent = new Agent(provider: $this->mockProvider, model: 'test-model', tools: [$tool]);
+
+            expect(iterator_to_array($agent->streamEvents('Get the data'), false))->not->toBeEmpty();
+        });
+
         it('respects maxTurns limit', function () {
             // Always return a tool call to trigger max turns
             $toolCallResponse = new Response(

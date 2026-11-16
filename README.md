@@ -229,6 +229,12 @@ $conversation->addUser('Tell me a joke');
 $messages = $conversation->getMessages();
 ```
 
+If you keep the transcript yourself, continue it with `$response->toMessage()` rather than
+`Message::assistant($response->text, ...)`. Some providers leave state on the response that they
+need back on the next request, such as reasoning signatures, and `toMessage()` carries it. It is
+plain data under `$message->replay`, keyed by provider name, so `toArray()` and `fromArray()`
+store and restore it with the rest of the message.
+
 ## Why a Response Stopped
 
 Every provider reports why the model stopped in the same words:
@@ -352,6 +358,9 @@ class MyProvider implements ProviderInterface
     public function getName(): string { return 'my-provider'; }
 }
 ```
+
+If your API needs opaque state back on the next request, return it as `replay: ['my-provider' => $state]`
+on the `Response`, and read it from `$message->replayFor('my-provider')` when you convert the history.
 
 To make it discoverable by name, ship a factory with it. Extend `AbstractProviderFactory`,
 declare your settings, and build the provider from them:

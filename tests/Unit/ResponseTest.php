@@ -179,4 +179,34 @@ describe('Response', function () {
             expect($withData->text)->toBe('Result');
         });
     });
+
+    describe('toMessage', function () {
+        it('becomes the assistant message that continues the conversation, replay included', function () {
+            $toolCall = new ToolCall('call_1', 'lookup', ['q' => 'x']);
+            $response = new Response(
+                text: 'Looking it up',
+                toolCalls: [$toolCall],
+                replay: ['anthropic' => [['type' => 'thinking', 'thinking' => '', 'signature' => 'sig']]],
+            );
+
+            $message = $response->toMessage();
+
+            expect($message->isAssistant())->toBeTrue();
+            expect($message->getText())->toBe('Looking it up');
+            expect($message->toolCalls)->toBe([$toolCall]);
+            expect($message->replayFor('anthropic'))->toBe([['type' => 'thinking', 'thinking' => '', 'signature' => 'sig']]);
+        });
+
+        it('has no tool calls when the model made none', function () {
+            expect((new Response(text: 'Done'))->toMessage()->toolCalls)->toBeNull();
+        });
+
+        it('keeps its replay through withData and withMessages', function () {
+            $replay = ['anthropic' => [['type' => 'compaction', 'content' => 'Summary']]];
+            $response = new Response(text: 'Done', replay: $replay);
+
+            expect($response->withData(['a' => 1])->replay)->toBe($replay);
+            expect($response->withMessages([])->replay)->toBe($replay);
+        });
+    });
 });

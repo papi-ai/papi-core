@@ -109,4 +109,33 @@ describe('Message', function () {
             expect($array['tool_call_id'])->toBe('call_123');
         });
     });
+
+    describe('replay', function () {
+        it('carries nothing to replay unless a provider left something', function () {
+            expect(Message::assistant('Hi')->replayFor('anthropic'))->toBe([]);
+        });
+
+        it('gives each provider back only what that provider left', function () {
+            $message = Message::assistant('Hi', replay: [
+                'anthropic' => [['type' => 'thinking', 'thinking' => '', 'signature' => 'sig']],
+            ]);
+
+            expect($message->replayFor('anthropic'))->toBe([['type' => 'thinking', 'thinking' => '', 'signature' => 'sig']]);
+            expect($message->replayFor('openai'))->toBe([]);
+        });
+
+        it('survives a round trip through JSON as plain data', function () {
+            $replay = ['anthropic' => [['type' => 'redacted_thinking', 'data' => 'opaque']]];
+            $message = Message::assistant('Hi', [new ToolCall('call_1', 'lookup', [])], $replay);
+
+            $restored = Message::fromArray(json_decode(json_encode($message->toArray()), true));
+
+            expect($restored->replayFor('anthropic'))->toBe([['type' => 'redacted_thinking', 'data' => 'opaque']]);
+            expect($restored->toolCalls[0]->id)->toBe('call_1');
+        });
+
+        it('leaves replay out of the array form when there is none', function () {
+            expect(Message::assistant('Hi')->toArray())->not->toHaveKey('replay');
+        });
+    });
 });

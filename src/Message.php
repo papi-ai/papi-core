@@ -27,12 +27,15 @@ final class Message
      * @param string|array $content The message content (string or array for multimodal)
      * @param array<ToolCall>|null $toolCalls Tool calls made by the assistant
      * @param string|null $toolCallId The tool call ID this message is responding to
+     * @param array<string, array> $replay What each provider needs back verbatim on the next request, keyed by
+     *   provider name: opaque state such as reasoning signatures. Plain data, so it can be stored and restored.
      */
     public function __construct(
         public readonly Role $role,
         public readonly string|array $content,
         public readonly ?array $toolCalls = null,
         public readonly ?string $toolCallId = null,
+        public readonly array $replay = [],
     ) {
     }
 
@@ -65,12 +68,13 @@ final class Message
      *
      * @param string $content The message content
      * @param array<ToolCall>|null $toolCalls Tool calls made by the assistant
+     * @param array<string, array> $replay What each provider left to be sent back, keyed by provider name
      *
      * @return self A new assistant-role message
      */
-    public static function assistant(string $content, ?array $toolCalls = null): self
+    public static function assistant(string $content, ?array $toolCalls = null, array $replay = []): self
     {
-        return new self(Role::Assistant, $content, $toolCalls);
+        return new self(Role::Assistant, $content, $toolCalls, replay: $replay);
     }
 
     /**
@@ -170,6 +174,17 @@ final class Message
     }
 
     /**
+     * What the named provider left on this message to be sent back verbatim, or nothing.
+     *
+     * Only the provider that wrote it can read it, so a conversation that moves between providers
+     * never sends one provider's state to another.
+     */
+    public function replayFor(string $provider): array
+    {
+        return $this->replay[$provider] ?? [];
+    }
+
+    /**
      * Get the text content of this message, extracting from multimodal content if needed.
      *
      * @return string The text content, or empty string if no text is found
@@ -193,7 +208,7 @@ final class Message
     /**
      * Create a message from a serialised array (e.g., from a conversation store).
      *
-     * @param array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string} $data Serialised message data
+     * @param array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string, replay?: array<string, array>} $data Serialised message data
      *
      * @return self The deserialised message
      */
@@ -212,13 +227,14 @@ final class Message
             content: $data['content'],
             toolCalls: $toolCalls,
             toolCallId: $data['tool_call_id'] ?? null,
+            replay: $data['replay'] ?? [],
         );
     }
 
     /**
      * Convert to a serialisable array representation.
      *
-     * @return array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string}
+     * @return array{role: string, content: string|array, tool_calls?: array, tool_call_id?: string, replay?: array<string, array>}
      */
     public function toArray(): array
     {
@@ -233,6 +249,10 @@ final class Message
 
         if ($this->toolCallId !== null) {
             $data['tool_call_id'] = $this->toolCallId;
+        }
+
+        if ($this->replay !== []) {
+            $data['replay'] = $this->replay;
         }
 
         return $data;

@@ -192,8 +192,7 @@ final class Agent implements AgentInterface
             // end by exhausting maxTurns and throwing.
             $response = $this->callProvider($messages, $outputSchema, $turn === 0 ? $toolChoice : null, $effort);
 
-            // Add assistant message to history
-            $messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
+            $messages[] = $response->toMessage();
 
             // If no tool calls, we're done
             if (!$response->hasToolCalls()) {
@@ -266,7 +265,7 @@ final class Agent implements AgentInterface
 
             // Get the complete response to check for tool calls
             $response = $this->callProvider($messages, null, $turnChoice, $effort);
-            $messages[] = Message::assistant($response->text, $response->toolCalls ?: null);
+            $messages[] = $response->toMessage();
 
             if (!$response->hasToolCalls()) {
                 yield StreamEvent::done();
