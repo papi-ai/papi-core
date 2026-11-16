@@ -38,6 +38,8 @@ final class Response
      * @param Usage|array     $usage      Token usage (a raw provider array is accepted and normalised)
      * @param string|null     $stopReason     Why the response ended, in the provider's own words
      * @param StopReason      $stoppedBecause Why the response ended, in the same words for every provider
+     * @param array<string, array> $replay What the provider needs back verbatim on the next request, keyed by
+     *   provider name. It travels on the assistant message built by toMessage().
      */
     public function __construct(
         public readonly string $text,
@@ -47,6 +49,7 @@ final class Response
         Usage|array $usage = [],
         public readonly ?string $stopReason = null,
         public readonly StopReason $stoppedBecause = StopReason::Other,
+        public readonly array $replay = [],
     ) {
         $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
     }
@@ -59,6 +62,14 @@ final class Response
     public function hasToolCalls(): bool
     {
         return !empty($this->toolCalls);
+    }
+
+    /**
+     * The assistant message that continues the conversation, carrying what the provider needs back.
+     */
+    public function toMessage(): Message
+    {
+        return Message::assistant($this->text, $this->toolCalls ?: null, $this->replay);
     }
 
     /**
@@ -200,6 +211,7 @@ final class Response
             usage: $this->usage,
             stopReason: $this->stopReason,
             stoppedBecause: $this->stoppedBecause,
+            replay: $this->replay,
         );
     }
 
@@ -218,6 +230,7 @@ final class Response
             usage: $this->usage,
             stopReason: $this->stopReason,
             stoppedBecause: $this->stoppedBecause,
+            replay: $this->replay,
         );
     }
 }
