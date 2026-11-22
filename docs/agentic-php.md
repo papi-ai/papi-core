@@ -81,6 +81,11 @@ $response->data['confidence'];  // 0.95
 $response->data['keywords'];    // ['great', 'recommend']
 ```
 
+The provider enforces the schema when it can. For one that cannot, the agent states the schema
+in the system instructions itself. The reply is always validated against the full schema; if it
+does not fit, the agent sends the errors back once and asks for a corrected object before
+throwing an `InvalidArgumentException`.
+
 ## Schema Types
 
 ```php
@@ -196,6 +201,27 @@ $conversation->addUser('Tell me a joke');
 $messages = $conversation->getMessages();
 ```
 
+An agent answers a stored conversation with `continue()`:
+
+```php
+$conversation->addUser('And in Celsius?');
+$response = $agent->continue($conversation);
+```
+
+The agent's own instructions take the place of the conversation's. On success, everything the
+run added is appended to the conversation, so saving it afterwards is enough; if the run throws,
+the conversation is left as it was.
+
+## Token Usage
+
+`$response->usage` covers every provider call in the run, tool turns included.
+`$response->lastCallUsage` is the final call alone, whose input tokens say how full the context
+is. `Usage::plus()` adds two usages. Tokens of a run that ends in an exception are not reported.
+
+## Workflows and Handoffs
+
+See [workflows.md](workflows.md).
+
 ## Configuration Options
 
 ```php
@@ -210,3 +236,6 @@ $agent = new Agent(
     maxTurns: 10,           // Max tool-use loops before stopping
 );
 ```
+
+Per run, `$agent->run($prompt, ['effort' => Effort::High])` sets the reasoning effort, as the
+`Effort` enum or its string value.
