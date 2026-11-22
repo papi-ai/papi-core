@@ -335,7 +335,10 @@ class Schema
             $schema['description'] = $this->description;
         }
 
-        if ($this->nullable && $this->type !== SchemaType::Null) {
+        if ($this->nullable && $this->type === SchemaType::Enum) {
+            $schema['type'] = ['string', 'null'];
+            $schema['enum'] = [...($this->enumValues ?? []), null];
+        } elseif ($this->nullable && $this->type !== SchemaType::Null) {
             $schema['type'] = [$this->type->value, 'null'];
         }
 

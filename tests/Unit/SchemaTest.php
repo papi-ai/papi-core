@@ -181,6 +181,11 @@ describe('Schema', function () {
     });
 
     describe('enum schema', function () {
+        it('describes a nullable enum in valid JSON Schema', function () {
+            expect(Schema::enum(['red', 'green'])->nullable()->toJsonSchema())
+                ->toBe(['type' => ['string', 'null'], 'enum' => ['red', 'green', null]]);
+        });
+
         it('validates enum values', function () {
             $schema = Schema::enum(['red', 'green', 'blue']);
 

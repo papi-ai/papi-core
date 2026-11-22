@@ -251,6 +251,7 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
         $effort = $options['effort'] ?? null;
 
         $usage = new Usage();
+        $corrected = false;
 
         // Agentic loop
         for ($turn = 0; $turn < $maxTurns; $turn++) {
@@ -262,9 +263,24 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
 
             $messages[] = $response->toMessage();
 
-            // If no tool calls, we're done
             if (!$response->hasToolCalls()) {
-                return $this->finalizeResponse($response, $messages, $outputSchema)->withRunUsage($usage);
+                try {
+                    return $this->finalizeResponse($response, $messages, $outputSchema)->withRunUsage($usage);
+                } catch (InvalidArgumentException $unusable) {
+                    if ($corrected) {
+                        throw $unusable;
+                    }
+
+                    // One correction, outside the turn budget: more would only hide a bad schema or prompt.
+                    $corrected = true;
+                    ++$maxTurns;
+                    $messages[] = Message::user(sprintf(
+                        "Your reply could not be used:\n%s\n\nReply again with only the corrected JSON object.",
+                        $unusable->getMessage(),
+                    ));
+
+                    continue;
+                }
             }
 
             // Execute tool calls
@@ -368,6 +384,8 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
 
         if ($outputSchema !== null && $this->provider->supportsStructuredOutput()) {
             $options['outputSchema'] = $outputSchema->toJsonSchema();
+        } elseif ($outputSchema !== null) {
+            $messages = $this->statingTheSchema($messages, $outputSchema);
         }
 
         return $this->provider->chat($messages, $options);
@@ -393,6 +411,34 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
         }
 
         return $options;
+    }
+
+    /**
+     * The messages with the schema spelt out in the system instructions, for a provider that
+     * cannot enforce one. The transcript itself is left as it was.
+     *
+     * @param array<Message> $messages
+     *
+     * @return list<Message>
+     */
+    private function statingTheSchema(array $messages, Schema $outputSchema): array
+    {
+        $request = sprintf(
+            "Reply with a single JSON object that matches this JSON Schema, and nothing else:\n%s",
+            json_encode($outputSchema->toJsonSchema(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+        );
+        $instructions = '';
+        $others = [];
+
+        foreach ($messages as $message) {
+            if ($message->isSystem()) {
+                $instructions = $message->getText();
+            } else {
+                $others[] = $message;
+            }
+        }
+
+        return [Message::system(ltrim($instructions . "\n\n" . $request)), ...$others];
     }
 
     /**
