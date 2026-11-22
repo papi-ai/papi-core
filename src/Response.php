@@ -44,6 +44,7 @@ final class Response
      *   provider name. It travels on the assistant message built by toMessage().
      * @param Usage|null      $lastCallUsage The tokens of the final provider call, when $usage covers a whole
      *   agent run. Its input tokens say how full the context is. Defaults to $usage.
+     * @param Handoff|null    $handoff The agent a tool handed the conversation to, which ended the run
      */
     public function __construct(
         public readonly string $text,
@@ -55,6 +56,7 @@ final class Response
         public readonly StopReason $stoppedBecause = StopReason::Other,
         public readonly array $replay = [],
         ?Usage $lastCallUsage = null,
+        public readonly ?Handoff $handoff = null,
     ) {
         $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
         $this->lastCallUsage = $lastCallUsage ?? $this->usage;
@@ -233,6 +235,14 @@ final class Response
     }
 
     /**
+     * A copy naming the agent the conversation was handed to.
+     */
+    public function withHandoff(Handoff $handoff): self
+    {
+        return $this->with(['handoff' => $handoff]);
+    }
+
+    /**
      * @param array<string, mixed> $changes Constructor arguments to replace, by name
      */
     private function with(array $changes): self
@@ -247,6 +257,7 @@ final class Response
             'stoppedBecause' => $this->stoppedBecause,
             'replay' => $this->replay,
             'lastCallUsage' => $this->lastCallUsage,
+            'handoff' => $this->handoff,
         ]);
     }
 }

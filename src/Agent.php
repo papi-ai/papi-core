@@ -283,10 +283,11 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
                 }
             }
 
-            // Execute tool calls
-            foreach ($response->toolCalls as $toolCall) {
-                $result = $this->executeTool($toolCall, $context);
-                $messages[] = Message::toolResult($toolCall->id, $result);
+            [$results, $handoff] = $this->resultsOf($response->toolCalls, $context);
+            array_push($messages, ...$results);
+
+            if ($handoff !== null) {
+                return $response->withMessages($messages)->withHandoff($handoff)->withRunUsage($usage);
             }
         }
 
@@ -411,6 +412,39 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
         }
 
         return $options;
+    }
+
+    /**
+     * Runs the tool calls of one turn. Once a tool hands the conversation over, the calls after
+     * it are answered without being run, so every call still has its result.
+     *
+     * @param array<ToolCall> $toolCalls
+     *
+     * @return array{0: list<Message>, 1: Handoff|null}
+     */
+    private function resultsOf(array $toolCalls, mixed $context): array
+    {
+        $results = [];
+        $handoff = null;
+
+        foreach ($toolCalls as $toolCall) {
+            if ($handoff !== null) {
+                $results[] = Message::toolResult($toolCall->id, sprintf('Not run: the conversation was handed over to %s.', $handoff->to));
+
+                continue;
+            }
+
+            $result = $this->executeTool($toolCall, $context);
+
+            if ($result instanceof Handoff) {
+                $handoff = $result;
+                $result = sprintf('Handed over to %s.', $handoff->to);
+            }
+
+            $results[] = Message::toolResult($toolCall->id, $result);
+        }
+
+        return [$results, $handoff];
     }
 
     /**
