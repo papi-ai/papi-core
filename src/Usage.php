@@ -68,13 +68,29 @@ final class Usage implements ArrayAccess
     }
 
     /**
-     * The original provider usage payload, preserved verbatim.
+     * The provider usage payload, verbatim. A usage built from counts alone gives those counts.
      *
      * @return array<string, mixed>
      */
     public function toArray(): array
     {
-        return $this->raw;
+        if ($this->raw !== []) {
+            return $this->raw;
+        }
+
+        return ['input_tokens' => $this->inputTokens, 'output_tokens' => $this->outputTokens, 'total_tokens' => $this->totalTokens];
+    }
+
+    /**
+     * The tokens of both, as a new Usage. The sum carries no provider payload.
+     */
+    public function plus(self $other): self
+    {
+        return new self(
+            $this->inputTokens + $other->inputTokens,
+            $this->outputTokens + $other->outputTokens,
+            $this->totalTokens + $other->totalTokens,
+        );
     }
 
     /**

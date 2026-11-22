@@ -16,6 +16,7 @@ namespace PapiAI\Core\Middleware;
 
 use PapiAI\Core\AgentRequest;
 use PapiAI\Core\Contracts\MiddlewareInterface;
+use PapiAI\Core\Message;
 use PapiAI\Core\Response;
 use Psr\SimpleCache\CacheInterface;
 
@@ -59,6 +60,10 @@ final class CacheMiddleware implements MiddlewareInterface
     private function buildKey(AgentRequest $request): string
     {
         $data = $request->prompt . json_encode($request->options);
+
+        if ($request->messages !== []) {
+            $data .= json_encode(array_map(static fn (Message $message): array => $message->toArray(), $request->messages));
+        }
 
         return $this->prefix . md5($data);
     }

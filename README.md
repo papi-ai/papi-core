@@ -12,6 +12,7 @@ A simple but powerful PHP library for building AI agents. Framework-agnostic, ty
 - **Structured output** - Zod-like schema validation for LLM responses
 - **Streaming** - First-class streaming support with events
 - **Hooks** - Observability hooks for logging, metrics, and error handling
+- **Workflows** - Multi-agent steps over plain data that pause, resume and recover, plus agent handoffs
 - **Type-safe** - Full PHP 8.2+ type hints and strict types
 
 ## Installation
@@ -125,6 +126,12 @@ $response->data['confidence'];  // 0.95
 $response->data['keywords'];    // ['great', 'recommend']
 ```
 
+The schema is enforced by the provider when it can enforce one. For a provider that cannot, the
+agent states the schema in the system instructions itself, so there is no need to repeat it in
+yours. Either way the reply is validated against the full schema; if it does not fit, the agent
+sends the errors back once and asks for a corrected object before giving up with an
+`InvalidArgumentException`.
+
 ### Schema Types
 
 ```php
@@ -235,6 +242,51 @@ need back on the next request, such as reasoning signatures, and `toMessage()` c
 plain data under `$message->replay`, keyed by provider name, so `toArray()` and `fromArray()`
 store and restore it with the rest of the message.
 
+To have an agent answer a stored conversation, pass it to `continue()`:
+
+```php
+$conversation->addUser('And in Celsius?');
+$response = $agent->continue($conversation);
+```
+
+The agent's own instructions take the place of the conversation's. On success, everything the
+run added (tool calls, their results and the answer) is appended to the conversation, so saving
+it afterwards is enough. If the run throws, the conversation is left as it was.
+
+## Token Usage
+
+```php
+$response = $agent->run('What is the weather in Lisbon?');
+
+$response->usage->inputTokens;           // every provider call in the run, tool turns included
+$response->usage->outputTokens;
+$response->lastCallUsage->inputTokens;   // the final call alone: how full the context is
+```
+
+`Usage::plus()` adds two usages. Tokens spent by a run that ends in an exception are not
+reported, nor are those of attempts that `RetryMiddleware` retried.
+
+## Workflows
+
+Several agents, and ordinary PHP, as named steps over plain data that can pause, resume and
+recover from a failure:
+
+```php
+use PapiAI\Core\Workflow\JumpTo;
+use PapiAI\Core\Workflow\State;
+use PapiAI\Core\Workflow\Workflow;
+
+$reviewed = (new Workflow('reviewed-draft'))
+    ->step('draft', fn (State $s) => $writer->run($s->get('brief')))
+    ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]), atMost: 3)
+    ->step('decide', fn (State $s) => $s->get('review')['approved'] ? null : new JumpTo('draft'));
+
+$result = $reviewed->start(['brief' => 'Announce version 2 of our API.']);
+```
+
+See [docs/workflows.md](docs/workflows.md) for routing, lists, human approval, resuming after a
+failure, and `Handoffs` for agents that pass a chat to one another.
+
 ## Why a Response Stopped
 
 Every provider reports why the model stopped in the same words:
@@ -273,6 +325,9 @@ $agent = new Agent(
     maxTurns: 10,           // Max tool-use loops before stopping
 );
 ```
+
+Per run, `$agent->run($prompt, ['effort' => Effort::High])` sets the reasoning effort, as the
+`Effort` enum or its string value.
 
 ## Providers
 
@@ -396,6 +451,14 @@ Then declare the package type and the factory in its `composer.json`:
     "extra": {"papi": {"factory": "Acme\\MyProviderFactory"}}
 }
 ```
+
+## Upgrading to 0.15.7
+
+- `$response->usage` on an agent response is now the total of the whole run. It used to be the
+  final provider call only, which under-reported any run that called tools. That figure is now
+  `$response->lastCallUsage`.
+- With `outputSchema`, a reply that does not fit is corrected once before the agent throws, and
+  providers without native support are told the schema in the system instructions.
 
 ## Testing
 

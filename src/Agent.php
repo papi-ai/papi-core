@@ -17,6 +17,7 @@ namespace PapiAI\Core;
 use Closure;
 use InvalidArgumentException;
 use PapiAI\Core\Contracts\AgentInterface;
+use PapiAI\Core\Contracts\ContinuesConversationInterface;
 use PapiAI\Core\Contracts\MiddlewareInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Contracts\ToolInterface;
@@ -32,7 +33,7 @@ use PapiAI\Core\Schema\Schema;
  *
  * Create instances via the fluent builder: Agent::build()->provider($p)->model('...')->create()
  */
-final class Agent implements AgentInterface
+final class Agent implements AgentInterface, ContinuesConversationInterface
 {
     /** @var array<string, ToolInterface> */
     private array $tools = [];
@@ -132,6 +133,7 @@ final class Agent implements AgentInterface
      *     context?: mixed,
      *     maxTurns?: int,
      *     toolChoice?: string|array{name: string},
+     *     effort?: Effort|string,
      * } $options Run options
      *
      * @return Response The final agent response
@@ -140,21 +142,44 @@ final class Agent implements AgentInterface
      */
     public function run(string $prompt, array $options = []): Response
     {
-        if (!empty($this->middleware)) {
-            $request = new AgentRequest(prompt: $prompt, options: $options);
-
-            return $this->runThroughMiddleware($request);
-        }
-
-        return $this->executeRun($prompt, $options);
+        return $this->dispatch(new AgentRequest(prompt: $prompt, options: $options));
     }
 
     /**
-     * Run the request through the middleware pipeline.
+     * Answer a conversation that is already under way, with this agent's instructions in place of
+     * the conversation's own (which are kept when the agent has none).
+     *
+     * On success, everything the run added (assistant turns, tool calls and their results, the
+     * final answer) is appended to the conversation, so saving it afterwards is enough. When the
+     * run throws, the conversation is left exactly as it was, never with a tool call that has no
+     * result.
+     *
+     * @param array{
+     *     outputSchema?: Schema,
+     *     context?: mixed,
+     *     maxTurns?: int,
+     *     toolChoice?: string|array{name: string},
+     *     effort?: Effort|string,
+     * } $options Run options
      */
-    private function runThroughMiddleware(AgentRequest $request): Response
+    public function continue(Conversation $conversation, array $options = []): Response
     {
-        $handler = fn (AgentRequest $req): Response => $this->executeRun($req->prompt, $req->options);
+        $opening = $this->openingOf($conversation);
+        $response = $this->dispatch(new AgentRequest($this->lastUserTextIn($opening), $options, $opening));
+
+        foreach (array_slice($response->messages, count($opening)) as $added) {
+            $conversation->addMessage($added);
+        }
+
+        return $response;
+    }
+
+    private function dispatch(AgentRequest $request): Response
+    {
+        $handler = fn (AgentRequest $req): Response => $this->executeRun(
+            $req->messages !== [] ? $req->messages : $this->openingFor($req->prompt),
+            $req->options,
+        );
 
         // Build the middleware chain from inside out
         foreach (array_reverse($this->middleware) as $middleware) {
@@ -166,24 +191,67 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Execute the actual agent run (the inner handler).
+     * @return list<Message>
      */
-    private function executeRun(string $prompt, array $options = []): Response
+    private function openingFor(string $prompt): array
     {
         $messages = [];
+
+        if ($this->instructions !== '') {
+            $messages[] = Message::system($this->instructions);
+        }
+
+        $messages[] = Message::user($prompt);
+
+        return $messages;
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private function openingOf(Conversation $conversation): array
+    {
+        $messages = array_values($conversation->getMessages());
+
+        if ($this->instructions === '') {
+            return $messages;
+        }
+
+        return [
+            Message::system($this->instructions),
+            ...array_filter($messages, static fn (Message $message): bool => !$message->isSystem()),
+        ];
+    }
+
+    /**
+     * @param list<Message> $messages
+     */
+    private function lastUserTextIn(array $messages): string
+    {
+        foreach (array_reverse($messages) as $message) {
+            if ($message->isUser()) {
+                return $message->getText();
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Run the agentic loop from the opening messages.
+     *
+     * @param list<Message> $messages
+     */
+    private function executeRun(array $messages, array $options = []): Response
+    {
         $maxTurns = $options['maxTurns'] ?? $this->maxTurns;
         $context = $options['context'] ?? null;
         $outputSchema = $options['outputSchema'] ?? null;
         $toolChoice = $options['toolChoice'] ?? null;
         $effort = $options['effort'] ?? null;
 
-        // Add system message
-        if ($this->instructions !== '') {
-            $messages[] = Message::system($this->instructions);
-        }
-
-        // Add user message
-        $messages[] = Message::user($prompt);
+        $usage = new Usage();
+        $corrected = false;
 
         // Agentic loop
         for ($turn = 0; $turn < $maxTurns; $turn++) {
@@ -191,18 +259,35 @@ final class Agent implements AgentInterface
             // turn would leave the model unable to answer in plain text, so the loop could only ever
             // end by exhausting maxTurns and throwing.
             $response = $this->callProvider($messages, $outputSchema, $turn === 0 ? $toolChoice : null, $effort);
+            $usage = $usage->plus($response->usage);
 
             $messages[] = $response->toMessage();
 
-            // If no tool calls, we're done
             if (!$response->hasToolCalls()) {
-                return $this->finalizeResponse($response, $messages, $outputSchema);
+                try {
+                    return $this->finalizeResponse($response, $messages, $outputSchema)->withRunUsage($usage);
+                } catch (InvalidArgumentException $unusable) {
+                    if ($corrected) {
+                        throw $unusable;
+                    }
+
+                    // One correction, outside the turn budget: more would only hide a bad schema or prompt.
+                    $corrected = true;
+                    ++$maxTurns;
+                    $messages[] = Message::user(sprintf(
+                        "Your reply could not be used:\n%s\n\nReply again with only the corrected JSON object.",
+                        $unusable->getMessage(),
+                    ));
+
+                    continue;
+                }
             }
 
-            // Execute tool calls
-            foreach ($response->toolCalls as $toolCall) {
-                $result = $this->executeTool($toolCall, $context);
-                $messages[] = Message::toolResult($toolCall->id, $result);
+            [$results, $handoff] = $this->resultsOf($response->toolCalls, $context);
+            array_push($messages, ...$results);
+
+            if ($handoff !== null) {
+                return $response->withMessages($messages)->withHandoff($handoff)->withRunUsage($usage);
             }
         }
 
@@ -294,12 +379,14 @@ final class Agent implements AgentInterface
         array $messages,
         ?Schema $outputSchema = null,
         string|array|null $toolChoice = null,
-        ?string $effort = null,
+        Effort|string|null $effort = null,
     ): Response {
         $options = $this->providerOptionsWith($toolChoice, $effort);
 
         if ($outputSchema !== null && $this->provider->supportsStructuredOutput()) {
             $options['outputSchema'] = $outputSchema->toJsonSchema();
+        } elseif ($outputSchema !== null) {
+            $messages = $this->statingTheSchema($messages, $outputSchema);
         }
 
         return $this->provider->chat($messages, $options);
@@ -312,7 +399,7 @@ final class Agent implements AgentInterface
      *
      * @return array<string, mixed> Options ready for the provider
      */
-    private function providerOptionsWith(string|array|null $toolChoice, ?string $effort = null): array
+    private function providerOptionsWith(string|array|null $toolChoice, Effort|string|null $effort = null): array
     {
         $options = $this->getProviderOptions();
 
@@ -321,10 +408,71 @@ final class Agent implements AgentInterface
         }
 
         if ($effort !== null) {
-            $options['effort'] = $effort;
+            $options['effort'] = $effort instanceof Effort ? $effort->value : $effort;
         }
 
         return $options;
+    }
+
+    /**
+     * Runs the tool calls of one turn. Once a tool hands the conversation over, the calls after
+     * it are answered without being run, so every call still has its result.
+     *
+     * @param array<ToolCall> $toolCalls
+     *
+     * @return array{0: list<Message>, 1: Handoff|null}
+     */
+    private function resultsOf(array $toolCalls, mixed $context): array
+    {
+        $results = [];
+        $handoff = null;
+
+        foreach ($toolCalls as $toolCall) {
+            if ($handoff !== null) {
+                $results[] = Message::toolResult($toolCall->id, sprintf('Not run: the conversation was handed over to %s.', $handoff->to));
+
+                continue;
+            }
+
+            $result = $this->executeTool($toolCall, $context);
+
+            if ($result instanceof Handoff) {
+                $handoff = $result;
+                $result = sprintf('Handed over to %s.', $handoff->to);
+            }
+
+            $results[] = Message::toolResult($toolCall->id, $result);
+        }
+
+        return [$results, $handoff];
+    }
+
+    /**
+     * The messages with the schema spelt out in the system instructions, for a provider that
+     * cannot enforce one. The transcript itself is left as it was.
+     *
+     * @param array<Message> $messages
+     *
+     * @return list<Message>
+     */
+    private function statingTheSchema(array $messages, Schema $outputSchema): array
+    {
+        $request = sprintf(
+            "Reply with a single JSON object that matches this JSON Schema, and nothing else:\n%s",
+            json_encode($outputSchema->toJsonSchema(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
+        );
+        $instructions = '';
+        $others = [];
+
+        foreach ($messages as $message) {
+            if ($message->isSystem()) {
+                $instructions = $message->getText();
+            } else {
+                $others[] = $message;
+            }
+        }
+
+        return [Message::system(ltrim($instructions . "\n\n" . $request)), ...$others];
     }
 
     /**

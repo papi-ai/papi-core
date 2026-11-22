@@ -96,4 +96,33 @@ describe('Usage', function () {
             expect($response->usage)->toBeInstanceOf(Usage::class);
         });
     });
+
+    describe('adding up', function () {
+        it('adds the tokens of two usages into a new one', function () {
+            $first = new Usage(100, 20);
+            $total = $first->plus(Usage::fromArray(['prompt_tokens' => 50, 'completion_tokens' => 5, 'total_tokens' => 60]));
+
+            expect($total->inputTokens)->toBe(150);
+            expect($total->outputTokens)->toBe(25);
+            expect($total->totalTokens)->toBe(180);
+            expect($first->inputTokens)->toBe(100);
+        });
+
+        it('starts from zero', function () {
+            expect((new Usage())->plus(new Usage(7, 3))->totalTokens)->toBe(10);
+        });
+
+        it('serialises a sum, which has no provider payload, as its token counts', function () {
+            $total = (new Usage(100, 20))->plus(new Usage(50, 5));
+
+            expect($total->toArray())->toBe(['input_tokens' => 150, 'output_tokens' => 25, 'total_tokens' => 175]);
+            expect(Usage::fromArray($total->toArray())->totalTokens)->toBe(175);
+        });
+
+        it('still serialises a provider usage as the provider sent it', function () {
+            $raw = ['prompt_tokens' => 1, 'completion_tokens' => 2, 'total_tokens' => 3, 'cached' => 9];
+
+            expect(Usage::fromArray($raw)->toArray())->toBe($raw);
+        });
+    });
 });
