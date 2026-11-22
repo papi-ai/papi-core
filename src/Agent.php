@@ -132,6 +132,7 @@ final class Agent implements AgentInterface
      *     context?: mixed,
      *     maxTurns?: int,
      *     toolChoice?: string|array{name: string},
+     *     effort?: Effort|string,
      * } $options Run options
      *
      * @return Response The final agent response
@@ -297,7 +298,7 @@ final class Agent implements AgentInterface
         array $messages,
         ?Schema $outputSchema = null,
         string|array|null $toolChoice = null,
-        ?string $effort = null,
+        Effort|string|null $effort = null,
     ): Response {
         $options = $this->providerOptionsWith($toolChoice, $effort);
 
@@ -315,7 +316,7 @@ final class Agent implements AgentInterface
      *
      * @return array<string, mixed> Options ready for the provider
      */
-    private function providerOptionsWith(string|array|null $toolChoice, ?string $effort = null): array
+    private function providerOptionsWith(string|array|null $toolChoice, Effort|string|null $effort = null): array
     {
         $options = $this->getProviderOptions();
 
@@ -324,7 +325,7 @@ final class Agent implements AgentInterface
         }
 
         if ($effort !== null) {
-            $options['effort'] = $effort;
+            $options['effort'] = $effort instanceof Effort ? $effort->value : $effort;
         }
 
         return $options;
