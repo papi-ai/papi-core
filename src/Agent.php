@@ -17,6 +17,7 @@ namespace PapiAI\Core;
 use Closure;
 use InvalidArgumentException;
 use PapiAI\Core\Contracts\AgentInterface;
+use PapiAI\Core\Contracts\ContinuesConversationInterface;
 use PapiAI\Core\Contracts\MiddlewareInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Contracts\ToolInterface;
@@ -32,7 +33,7 @@ use PapiAI\Core\Schema\Schema;
  *
  * Create instances via the fluent builder: Agent::build()->provider($p)->model('...')->create()
  */
-final class Agent implements AgentInterface
+final class Agent implements AgentInterface, ContinuesConversationInterface
 {
     /** @var array<string, ToolInterface> */
     private array $tools = [];
@@ -141,21 +142,44 @@ final class Agent implements AgentInterface
      */
     public function run(string $prompt, array $options = []): Response
     {
-        if (!empty($this->middleware)) {
-            $request = new AgentRequest(prompt: $prompt, options: $options);
-
-            return $this->runThroughMiddleware($request);
-        }
-
-        return $this->executeRun($prompt, $options);
+        return $this->dispatch(new AgentRequest(prompt: $prompt, options: $options));
     }
 
     /**
-     * Run the request through the middleware pipeline.
+     * Answer a conversation that is already under way, with this agent's instructions in place of
+     * the conversation's own (which are kept when the agent has none).
+     *
+     * On success, everything the run added (assistant turns, tool calls and their results, the
+     * final answer) is appended to the conversation, so saving it afterwards is enough. When the
+     * run throws, the conversation is left exactly as it was, never with a tool call that has no
+     * result.
+     *
+     * @param array{
+     *     outputSchema?: Schema,
+     *     context?: mixed,
+     *     maxTurns?: int,
+     *     toolChoice?: string|array{name: string},
+     *     effort?: Effort|string,
+     * } $options Run options
      */
-    private function runThroughMiddleware(AgentRequest $request): Response
+    public function continue(Conversation $conversation, array $options = []): Response
     {
-        $handler = fn (AgentRequest $req): Response => $this->executeRun($req->prompt, $req->options);
+        $opening = $this->openingOf($conversation);
+        $response = $this->dispatch(new AgentRequest($this->lastUserTextIn($opening), $options, $opening));
+
+        foreach (array_slice($response->messages, count($opening)) as $added) {
+            $conversation->addMessage($added);
+        }
+
+        return $response;
+    }
+
+    private function dispatch(AgentRequest $request): Response
+    {
+        $handler = fn (AgentRequest $req): Response => $this->executeRun(
+            $req->messages !== [] ? $req->messages : $this->openingFor($req->prompt),
+            $req->options,
+        );
 
         // Build the middleware chain from inside out
         foreach (array_reverse($this->middleware) as $middleware) {
@@ -167,24 +191,64 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Execute the actual agent run (the inner handler).
+     * @return list<Message>
      */
-    private function executeRun(string $prompt, array $options = []): Response
+    private function openingFor(string $prompt): array
     {
         $messages = [];
+
+        if ($this->instructions !== '') {
+            $messages[] = Message::system($this->instructions);
+        }
+
+        $messages[] = Message::user($prompt);
+
+        return $messages;
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private function openingOf(Conversation $conversation): array
+    {
+        $messages = array_values($conversation->getMessages());
+
+        if ($this->instructions === '') {
+            return $messages;
+        }
+
+        return [
+            Message::system($this->instructions),
+            ...array_filter($messages, static fn (Message $message): bool => !$message->isSystem()),
+        ];
+    }
+
+    /**
+     * @param list<Message> $messages
+     */
+    private function lastUserTextIn(array $messages): string
+    {
+        foreach (array_reverse($messages) as $message) {
+            if ($message->isUser()) {
+                return $message->getText();
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Run the agentic loop from the opening messages.
+     *
+     * @param list<Message> $messages
+     */
+    private function executeRun(array $messages, array $options = []): Response
+    {
         $maxTurns = $options['maxTurns'] ?? $this->maxTurns;
         $context = $options['context'] ?? null;
         $outputSchema = $options['outputSchema'] ?? null;
         $toolChoice = $options['toolChoice'] ?? null;
         $effort = $options['effort'] ?? null;
-
-        // Add system message
-        if ($this->instructions !== '') {
-            $messages[] = Message::system($this->instructions);
-        }
-
-        // Add user message
-        $messages[] = Message::user($prompt);
 
         $usage = new Usage();
 
