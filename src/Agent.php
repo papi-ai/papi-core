@@ -185,18 +185,21 @@ final class Agent implements AgentInterface
         // Add user message
         $messages[] = Message::user($prompt);
 
+        $usage = new Usage();
+
         // Agentic loop
         for ($turn = 0; $turn < $maxTurns; $turn++) {
             // Forced choice opens the conversation, then the model is free again. Forcing it every
             // turn would leave the model unable to answer in plain text, so the loop could only ever
             // end by exhausting maxTurns and throwing.
             $response = $this->callProvider($messages, $outputSchema, $turn === 0 ? $toolChoice : null, $effort);
+            $usage = $usage->plus($response->usage);
 
             $messages[] = $response->toMessage();
 
             // If no tool calls, we're done
             if (!$response->hasToolCalls()) {
-                return $this->finalizeResponse($response, $messages, $outputSchema);
+                return $this->finalizeResponse($response, $messages, $outputSchema)->withRunUsage($usage);
             }
 
             // Execute tool calls

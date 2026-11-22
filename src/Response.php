@@ -30,6 +30,8 @@ final class Response
      */
     public readonly Usage $usage;
 
+    public readonly Usage $lastCallUsage;
+
     /**
      * @param string          $text       The text response from the LLM
      * @param array|null      $data       Parsed structured data (if output schema was used)
@@ -40,6 +42,8 @@ final class Response
      * @param StopReason      $stoppedBecause Why the response ended, in the same words for every provider
      * @param array<string, array> $replay What the provider needs back verbatim on the next request, keyed by
      *   provider name. It travels on the assistant message built by toMessage().
+     * @param Usage|null      $lastCallUsage The tokens of the final provider call, when $usage covers a whole
+     *   agent run. Its input tokens say how full the context is. Defaults to $usage.
      */
     public function __construct(
         public readonly string $text,
@@ -50,8 +54,10 @@ final class Response
         public readonly ?string $stopReason = null,
         public readonly StopReason $stoppedBecause = StopReason::Other,
         public readonly array $replay = [],
+        ?Usage $lastCallUsage = null,
     ) {
         $this->usage = is_array($usage) ? Usage::fromArray($usage) : $usage;
+        $this->lastCallUsage = $lastCallUsage ?? $this->usage;
     }
 
     /**
@@ -203,16 +209,7 @@ final class Response
      */
     public function withData(array $data): self
     {
-        return new self(
-            text: $this->text,
-            data: $data,
-            toolCalls: $this->toolCalls,
-            messages: $this->messages,
-            usage: $this->usage,
-            stopReason: $this->stopReason,
-            stoppedBecause: $this->stoppedBecause,
-            replay: $this->replay,
-        );
+        return $this->with(['data' => $data]);
     }
 
     /**
@@ -222,15 +219,34 @@ final class Response
      */
     public function withMessages(array $messages): self
     {
-        return new self(
-            text: $this->text,
-            data: $this->data,
-            toolCalls: $this->toolCalls,
-            messages: $messages,
-            usage: $this->usage,
-            stopReason: $this->stopReason,
-            stoppedBecause: $this->stoppedBecause,
-            replay: $this->replay,
-        );
+        return $this->with(['messages' => $messages]);
+    }
+
+    /**
+     * A copy reporting the tokens of a whole run, with this response's own usage kept as the last call's.
+     *
+     * @param Usage $run The sum over every provider call in the run, this one included
+     */
+    public function withRunUsage(Usage $run): self
+    {
+        return $this->with(['usage' => $run, 'lastCallUsage' => $this->lastCallUsage]);
+    }
+
+    /**
+     * @param array<string, mixed> $changes Constructor arguments to replace, by name
+     */
+    private function with(array $changes): self
+    {
+        return new self(...$changes + [
+            'text' => $this->text,
+            'data' => $this->data,
+            'toolCalls' => $this->toolCalls,
+            'messages' => $this->messages,
+            'usage' => $this->usage,
+            'stopReason' => $this->stopReason,
+            'stoppedBecause' => $this->stoppedBecause,
+            'replay' => $this->replay,
+            'lastCallUsage' => $this->lastCallUsage,
+        ]);
     }
 }
