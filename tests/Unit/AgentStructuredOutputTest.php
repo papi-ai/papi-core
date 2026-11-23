@@ -34,7 +34,6 @@ describe('Agent structured output', function () {
         expect($sent)->toStartWith('You review drafts.');
         expect($sent)->toContain('single JSON object');
         expect($sent)->toContain('"approved":{"type":"boolean"}');
-        expect($provider->calls[0]['options'])->not->toHaveKey('outputSchema');
         expect($response->data)->toBe(['approved' => true, 'issues' => []]);
         expect($response->messages[0]->getText())->toBe('You review drafts.');
     });
@@ -46,6 +45,14 @@ describe('Agent structured output', function () {
 
         expect($provider->calls[0]['messages'][0]->isSystem())->toBeTrue();
         expect($provider->calls[0]['messages'][0]->getText())->toContain('single JSON object');
+    });
+
+    it('hands the schema to a provider that cannot enforce one, so it can still ask for JSON', function () {
+        $provider = new ScriptedProvider(false, new Response('{"approved": true, "issues": []}'));
+
+        (new Agent($provider, 'm'))->run('Review this.', ['outputSchema' => verdictSchema()]);
+
+        expect($provider->calls[0]['options']['outputSchema'])->toBe(verdictSchema()->toJsonSchema());
     });
 
     it('leaves the instructions alone for a provider that enforces the schema', function () {
