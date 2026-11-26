@@ -164,6 +164,12 @@ Schema::enum(['a', 'b', 'c']) // Enum values
 ->description('...')          // Description for LLM
 ```
 
+`pattern()` takes a PHP regular expression, delimiters included, and checks values with
+`preg_match`. Providers receive it as a JSON Schema pattern, without the delimiters:
+`'/^[A-Z]{3}$/'` is sent as `^[A-Z]{3}$`. JSON Schema has no flags, so `toJsonSchema()` drops a
+trailing `u` and throws an `InvalidArgumentException` for any other (`i`, `m`, `s`, `x`). A schema
+used only for local validation can carry any flag.
+
 ## Streaming
 
 ### Simple Text Streaming
@@ -451,6 +457,14 @@ Then declare the package type and the factory in its `composer.json`:
     "extra": {"papi": {"factory": "Acme\\MyProviderFactory"}}
 }
 ```
+
+## Upgrading to 0.15.9
+
+- `Schema::toJsonSchema()` emits `pattern` without its PHP delimiters, so a provider that enforces
+  the schema reads the expression you wrote. Nothing changes in how values are validated.
+- It throws an `InvalidArgumentException` for a pattern with a flag other than `u`. Such a schema
+  could not be sent correctly before either; drop the flag or spell it out in the expression
+  (`[A-Za-z]` for `/[a-z]/i`).
 
 ## Upgrading to 0.15.7
 

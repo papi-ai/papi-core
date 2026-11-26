@@ -255,7 +255,10 @@ class Schema
     /**
      * Set a regex pattern constraint for string values.
      *
-     * @param string $pattern A valid regular expression pattern
+     * Values are checked with `preg_match`. `toJsonSchema()` emits the expression without its
+     * delimiters, and throws for a flag other than `u`, which JSON Schema cannot express.
+     *
+     * @param string $pattern A PHP regular expression, delimiters included
      *
      * @return self For method chaining
      */
@@ -354,7 +357,7 @@ class Schema
             $schema['maxLength'] = $this->maxLength;
         }
         if ($this->pattern !== null) {
-            $schema['pattern'] = $this->pattern;
+            $schema['pattern'] = (new PhpRegex($this->pattern))->asJsonSchemaPattern();
         }
 
         // Number constraints
