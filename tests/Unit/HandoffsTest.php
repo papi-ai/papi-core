@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 use PapiAI\Core\Agent;
 use PapiAI\Core\Conversation;
+use PapiAI\Core\Exception\HandoffLimitException;
 use PapiAI\Core\Handoffs;
 use PapiAI\Core\Response;
 use PapiAI\Core\Storage\FileConversationStore;
@@ -168,15 +169,35 @@ describe('Handoffs', function () {
         expect($conversation->count())->toBe(1);
     });
 
-    it('stops passing the conversation around after five hops', function () {
+    it('refuses a handoff beyond the limit, and leaves the conversation as it was', function () {
         $ping = new ScriptedProvider(false, ...array_map(fn (int $n) => transferTo('pong', "a{$n}"), range(1, 9)));
         $pong = new ScriptedProvider(false, ...array_map(fn (int $n) => transferTo('ping', "b{$n}"), range(1, 9)));
         $desk = new Handoffs(['ping' => new Agent($ping, 'm'), 'pong' => new Agent($pong, 'm')], start: 'ping');
+        $conversation = (new Conversation())->addUser('Hello');
 
-        $response = $desk->reply((new Conversation())->addUser('Hello'));
+        try {
+            $desk->reply($conversation);
+            $refused = null;
+        } catch (HandoffLimitException $refused) {
+        }
 
+        expect($refused?->getMessage())->toBe('The conversation was handed over 5 times in one reply and then once more, to "ping", without an answer.');
+        expect($refused->limit)->toBe(5);
+        expect($refused->refusedTo)->toBe('ping');
+        expect($refused->usage->totalTokens)->toBe(72);
         expect(count($ping->calls) + count($pong->calls))->toBe(6);
-        expect($response->handoff)->not->toBeNull();
+        expect($conversation->count())->toBe(1);
+        expect($desk->current($conversation))->toBe('ping');
+    });
+
+    it('follows as many handoffs as the limit allows', function () {
+        $ping = new ScriptedProvider(false, transferTo('pong', 'a1'), transferTo('pong', 'a2'));
+        $pong = new ScriptedProvider(false, transferTo('ping', 'b1'), new Response('Here I am.'));
+        $desk = new Handoffs(['ping' => new Agent($ping, 'm'), 'pong' => new Agent($pong, 'm')], start: 'ping', maxHops: 3);
+        $conversation = (new Conversation())->addUser('Hello');
+
+        expect($desk->reply($conversation)->text)->toBe('Here I am.');
+        expect($desk->current($conversation))->toBe('pong');
     });
 
     it('refuses agents it cannot work with', function () {

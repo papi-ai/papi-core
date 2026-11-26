@@ -17,6 +17,7 @@ namespace PapiAI\Core;
 use InvalidArgumentException;
 use PapiAI\Core\Contracts\AgentInterface;
 use PapiAI\Core\Contracts\ContinuesConversationInterface;
+use PapiAI\Core\Exception\HandoffLimitException;
 
 /**
  * A group of agents that can pass a conversation to one another.
@@ -40,7 +41,7 @@ final class Handoffs
      * @param array<string, AgentInterface&ContinuesConversationInterface> $agents       By name: letters, digits and "_"
      * @param string                                                         $start        The agent a new conversation begins with
      * @param array<string, string>                                          $descriptions What each agent handles, by name, for the transfer tools
-     * @param int                                                            $maxHops      How many handoffs one reply may make
+     * @param int                                                            $maxHops      How many handoffs one reply may follow
      *
      * @throws InvalidArgumentException When a name cannot be a tool name, or the starting agent is not one of them
      */
@@ -69,10 +70,12 @@ final class Handoffs
 
     /**
      * Answer the conversation with its current agent, following handoffs until an agent answers.
-     * What the agents added is appended to the conversation; when an agent throws, the
-     * conversation is left as it was.
+     * What the agents added is appended to the conversation; when an agent throws, or the
+     * handoff limit is passed, the conversation is left as it was.
      *
      * @return Response The answering agent's response, with the usage of every agent that took part
+     *
+     * @throws HandoffLimitException When the agents hand over more often than the limit, with no answer
      */
     public function reply(Conversation $conversation): Response
     {
@@ -94,7 +97,12 @@ final class Handoffs
             }
 
             $current = $response->handoff?->to;
-        } while ($current !== null && isset($this->agents[$current]) && $hops++ < $this->maxHops);
+            $handedOver = $current !== null && isset($this->agents[$current]);
+
+            if ($handedOver && ++$hops > $this->maxHops) {
+                throw new HandoffLimitException($this->maxHops, $current, $usage);
+            }
+        } while ($handedOver);
 
         foreach ($added as $message) {
             $conversation->addMessage($message);
