@@ -162,11 +162,15 @@ final class Workflow
         $state = $this->resumable(is_string($run) ? $this->stored($run) : $run, $evenIfRunning);
         $step = (string) $state->nextStep();
 
-        if ($state->status === Status::Paused) {
-            return $this->runFrom($state->withOutput($step, $answer, $this->following($step)));
+        if ($state->status !== Status::Paused) {
+            return $this->runFrom($state->startingAt($step));
         }
 
-        return $this->runFrom($state->startingAt($step));
+        $answered = $state->withOutput($step, $answer, $this->following($step));
+        $this->store?->save($answered);
+        $this->tell('afterStep', $step, $answered);
+
+        return $this->runSteps($answered);
     }
 
     private function add(string $name, StepInterface $step): self
@@ -207,6 +211,12 @@ final class Workflow
     private function runFrom(State $state): WorkflowResult
     {
         $this->store?->save($state);
+
+        return $this->runSteps($state);
+    }
+
+    private function runSteps(State $state): WorkflowResult
+    {
         $error = null;
 
         while ($state->status === Status::Running && $state->nextStep() !== null) {

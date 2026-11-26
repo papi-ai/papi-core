@@ -127,7 +127,31 @@ describe('Workflow', function () {
 
             $workflow->resume($workflow->start([])->state, 'yes');
 
-            expect($seen)->toBe(['start one', 'done one = 1', 'start ask', 'pause ask: Go on?', 'start boom', 'fail boom: Out of luck']);
+            expect($seen)->toBe(['start one', 'done one = 1', 'start ask', 'pause ask: Go on?', 'done ask = "yes"', 'start boom', 'fail boom: Out of luck']);
+        });
+
+        it('finishes a paused step once, when it is resumed, with the answer saved', function () {
+            $seen = [];
+            $store = new InMemoryWorkflowStore();
+            $workflow = (new Workflow('watched', $store))
+                ->step('ask', fn (State $s) => new Pause('Go on?'))
+                ->step('act', fn (State $s) => 'acted on ' . $s->get('ask'))
+                ->hook('beforeStep', function (string $step) use (&$seen) {
+                    $seen[] = "start {$step}";
+                })
+                ->hook('onPause', function (string $step) use (&$seen) {
+                    $seen[] = "pause {$step}";
+                })
+                ->hook('afterStep', function (string $step, State $state) use (&$seen, $store) {
+                    $seen[] = "done {$step}, stored " . json_encode($store->load($state->id)?->get($step));
+                });
+
+            $paused = $workflow->start([]);
+            $atPause = $seen;
+            $workflow->resume($paused->state->id, 'yes');
+
+            expect($atPause)->toBe(['start ask', 'pause ask']);
+            expect(array_slice($seen, 2))->toBe(['done ask, stored "yes"', 'start act', 'done act, stored "acted on yes"']);
         });
 
         it('refuses a hook it does not have', function () {
