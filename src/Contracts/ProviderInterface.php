@@ -83,9 +83,12 @@ interface ProviderInterface
     public function supportsVision(): bool;
 
     /**
-     * Check if the provider supports structured output with JSON schema.
+     * Whether the provider makes the model follow the `outputSchema` option on its own.
      *
-     * @return bool True if the provider can constrain output to a given schema
+     * When it does not, the agent states the schema in the instructions. The option is passed
+     * either way, so a provider with only a JSON mode can still switch it on.
+     *
+     * @return bool True if the schema needs no stating in the prompt
      */
     public function supportsStructuredOutput(): bool;
 

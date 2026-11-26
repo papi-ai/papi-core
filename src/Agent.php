@@ -383,9 +383,11 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
     ): Response {
         $options = $this->providerOptionsWith($toolChoice, $effort);
 
-        if ($outputSchema !== null && $this->provider->supportsStructuredOutput()) {
+        if ($outputSchema !== null) {
             $options['outputSchema'] = $outputSchema->toJsonSchema();
-        } elseif ($outputSchema !== null) {
+        }
+
+        if ($outputSchema !== null && !$this->provider->supportsStructuredOutput()) {
             $messages = $this->statingTheSchema($messages, $outputSchema);
         }
 
