@@ -22,6 +22,7 @@ use PapiAI\Core\Contracts\MiddlewareInterface;
 use PapiAI\Core\Contracts\ProviderInterface;
 use PapiAI\Core\Contracts\ToolInterface;
 use PapiAI\Core\Schema\Schema;
+use PapiAI\Core\Schema\WireSchema;
 
 /**
  * Core agent implementation that orchestrates LLM interactions and tool execution.
@@ -384,7 +385,7 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
         $options = $this->providerOptionsWith($toolChoice, $effort);
 
         if ($outputSchema !== null) {
-            $options['outputSchema'] = $outputSchema->toJsonSchema();
+            $options['outputSchema'] = (new WireSchema($outputSchema->toJsonSchema()))->toArray();
         }
 
         if ($outputSchema !== null && !$this->provider->supportsStructuredOutput()) {
@@ -503,7 +504,7 @@ final class Agent implements AgentInterface, ContinuesConversationInterface
                 fn (ToolInterface $tool) => [
                     'name' => $tool->getName(),
                     'description' => $tool->getDescription(),
-                    'parameters' => $tool->getParameterSchema(),
+                    'parameters' => (new WireSchema($tool->getParameterSchema()))->toArray(),
                 ],
                 $this->tools
             ));

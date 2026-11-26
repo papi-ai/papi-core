@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 use PapiAI\Core\Agent;
 use PapiAI\Core\Conversation;
+use PapiAI\Core\Exception\HandoffLimitException;
 use PapiAI\Core\Handoffs;
 use PapiAI\Core\Response;
 use PapiAI\Core\Storage\FileConversationStore;
@@ -105,9 +106,56 @@ describe('Handoffs', function () {
         $desk->reply($conversation);
 
         $shown = array_map(static fn ($message): string => $message->role->value, $closer->calls[0]['messages']);
-        expect($shown)->toBe(['user', 'assistant', 'tool']);
-        expect($closer->calls[0]['messages'][1]->toolCalls[0]->name)->toBe('transfer_to_closer');
+        expect($shown)->toBe(['user', 'user']);
         expect($conversation->count())->toBe(6);
+    });
+
+    it('shows the receiving agent a handoff as something that happened to it, not a call it made', function () {
+        $conversation = (new Conversation())->addUser('I was charged twice this month.');
+
+        $this->desk->reply($conversation);
+
+        $sent = array_map(
+            static fn ($message): array => [$message->role->value, $message->getText(), $message->toolCalls],
+            $this->billing->calls[0]['messages'],
+        );
+        expect($sent)->toBe([
+            ['system', 'You handle billing.', null],
+            ['user', 'I was charged twice this month.', null],
+            ['user', '[triage handed this conversation over to you.]', null],
+        ]);
+    });
+
+    it('words a handoff for whoever reads it', function () {
+        $triage = new ScriptedProvider(false, transferTo('billing', 't1'), new Response('Anything else?'));
+        $billing = new ScriptedProvider(false, new Response('Let me pass you back.', toolCalls: [new ToolCall('b1', 'transfer_to_triage', [])]));
+        $desk = new Handoffs(['triage' => new Agent($triage, 'm'), 'billing' => new Agent($billing, 'm')], start: 'triage');
+
+        $desk->reply((new Conversation())->addUser('Hello'));
+
+        $read = array_map(static fn ($message): string => $message->role->value . ': ' . $message->getText(), $triage->calls[1]['messages']);
+        expect($read)->toBe([
+            'user: Hello',
+            'user: [You handed this conversation over to billing.]',
+            'assistant: Let me pass you back.',
+            'user: [billing handed this conversation over to you.]',
+        ]);
+    });
+
+    it('names both agents of a handoff to a third', function () {
+        $triage = new ScriptedProvider(false, transferTo('billing', 't1'));
+        $billing = new ScriptedProvider(false, transferTo('technical', 'b1'));
+        $technical = new ScriptedProvider(false, new Response('Fixed.'));
+        $desk = new Handoffs([
+            'triage' => new Agent($triage, 'm'),
+            'billing' => new Agent($billing, 'm'),
+            'technical' => new Agent($technical, 'm'),
+        ], start: 'triage');
+
+        $desk->reply((new Conversation())->addUser('Hello'));
+
+        expect($technical->calls[0]['messages'][1]->getText())->toBe('[triage handed this conversation over to billing.]');
+        expect($technical->calls[0]['messages'][2]->getText())->toBe('[billing handed this conversation over to you.]');
     });
 
     it('leaves the conversation as it was when an agent fails after a handoff', function () {
@@ -121,15 +169,35 @@ describe('Handoffs', function () {
         expect($conversation->count())->toBe(1);
     });
 
-    it('stops passing the conversation around after five hops', function () {
+    it('refuses a handoff beyond the limit, and leaves the conversation as it was', function () {
         $ping = new ScriptedProvider(false, ...array_map(fn (int $n) => transferTo('pong', "a{$n}"), range(1, 9)));
         $pong = new ScriptedProvider(false, ...array_map(fn (int $n) => transferTo('ping', "b{$n}"), range(1, 9)));
         $desk = new Handoffs(['ping' => new Agent($ping, 'm'), 'pong' => new Agent($pong, 'm')], start: 'ping');
+        $conversation = (new Conversation())->addUser('Hello');
 
-        $response = $desk->reply((new Conversation())->addUser('Hello'));
+        try {
+            $desk->reply($conversation);
+            $refused = null;
+        } catch (HandoffLimitException $refused) {
+        }
 
+        expect($refused?->getMessage())->toBe('The conversation was handed over 5 times in one reply and then once more, to "ping", without an answer.');
+        expect($refused->limit)->toBe(5);
+        expect($refused->refusedTo)->toBe('ping');
+        expect($refused->usage->totalTokens)->toBe(72);
         expect(count($ping->calls) + count($pong->calls))->toBe(6);
-        expect($response->handoff)->not->toBeNull();
+        expect($conversation->count())->toBe(1);
+        expect($desk->current($conversation))->toBe('ping');
+    });
+
+    it('follows as many handoffs as the limit allows', function () {
+        $ping = new ScriptedProvider(false, transferTo('pong', 'a1'), transferTo('pong', 'a2'));
+        $pong = new ScriptedProvider(false, transferTo('ping', 'b1'), new Response('Here I am.'));
+        $desk = new Handoffs(['ping' => new Agent($ping, 'm'), 'pong' => new Agent($pong, 'm')], start: 'ping', maxHops: 3);
+        $conversation = (new Conversation())->addUser('Hello');
+
+        expect($desk->reply($conversation)->text)->toBe('Here I am.');
+        expect($desk->current($conversation))->toBe('pong');
     });
 
     it('refuses agents it cannot work with', function () {

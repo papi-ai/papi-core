@@ -17,6 +17,7 @@ namespace PapiAI\Core;
 use InvalidArgumentException;
 use PapiAI\Core\Contracts\AgentInterface;
 use PapiAI\Core\Contracts\ContinuesConversationInterface;
+use PapiAI\Core\Exception\HandoffLimitException;
 
 /**
  * A group of agents that can pass a conversation to one another.
@@ -26,9 +27,11 @@ use PapiAI\Core\Contracts\ContinuesConversationInterface;
  * starting agent when there is none. So storing the conversation is all it takes for the next
  * message to reach the right agent.
  *
- * An agent is shown the user's messages, the assistants' text and the transfers. Tool calls an
- * agent made for itself are left out for the others, as is provider replay data: both are bound
- * to the agent that produced them.
+ * An agent is shown the user's messages, what the assistants said, and each handoff as a note
+ * in the transcript ("[triage handed this conversation over to you.]"), so a transfer reads as
+ * something that happened and not as a call the reader made. Tool calls and their results are
+ * left out, as is provider replay data: both are bound to the agent that produced them. The
+ * stored conversation keeps every call and result.
  */
 final class Handoffs
 {
@@ -38,7 +41,7 @@ final class Handoffs
      * @param array<string, AgentInterface&ContinuesConversationInterface> $agents       By name: letters, digits and "_"
      * @param string                                                         $start        The agent a new conversation begins with
      * @param array<string, string>                                          $descriptions What each agent handles, by name, for the transfer tools
-     * @param int                                                            $maxHops      How many handoffs one reply may make
+     * @param int                                                            $maxHops      How many handoffs one reply may follow
      *
      * @throws InvalidArgumentException When a name cannot be a tool name, or the starting agent is not one of them
      */
@@ -67,10 +70,12 @@ final class Handoffs
 
     /**
      * Answer the conversation with its current agent, following handoffs until an agent answers.
-     * What the agents added is appended to the conversation; when an agent throws, the
-     * conversation is left as it was.
+     * What the agents added is appended to the conversation; when an agent throws, or the
+     * handoff limit is passed, the conversation is left as it was.
      *
      * @return Response The answering agent's response, with the usage of every agent that took part
+     *
+     * @throws HandoffLimitException When the agents hand over more often than the limit, with no answer
      */
     public function reply(Conversation $conversation): Response
     {
@@ -81,7 +86,7 @@ final class Handoffs
         $hops = 0;
 
         do {
-            $shown = $this->shownToAgents($whole);
+            $shown = $this->shownTo($current, $whole);
             $before = count($shown->getMessages());
             $response = $this->agents[$current]->continue($shown);
             $usage = $usage->plus($response->usage);
@@ -92,7 +97,12 @@ final class Handoffs
             }
 
             $current = $response->handoff?->to;
-        } while ($current !== null && isset($this->agents[$current]) && $hops++ < $this->maxHops);
+            $handedOver = $current !== null && isset($this->agents[$current]);
+
+            if ($handedOver && ++$hops > $this->maxHops) {
+                throw new HandoffLimitException($this->maxHops, $current, $usage);
+            }
+        } while ($handedOver);
 
         foreach ($added as $message) {
             $conversation->addMessage($message);
@@ -146,31 +156,45 @@ final class Handoffs
     }
 
     /**
-     * The conversation every agent can read: user messages, assistant text, and the transfers
-     * with their results.
+     * The conversation as one agent reads it: user messages, what the assistants said, and a
+     * note for each handoff, worded for the reader.
      */
-    private function shownToAgents(Conversation $whole): Conversation
+    private function shownTo(string $reader, Conversation $whole): Conversation
     {
         $shown = new Conversation();
-        $transferIds = [];
+        $holder = $this->start;
 
         foreach ($whole->getMessages() as $message) {
-            if ($message->isAssistant()) {
-                $transfers = array_values(array_filter($message->toolCalls ?? [], $this->isTransfer(...)));
-                array_push($transferIds, ...array_map(static fn (ToolCall $toolCall): string => $toolCall->id, $transfers));
+            if ($message->isTool()) {
+                continue;
+            }
 
-                if ($transfers !== [] || $message->getText() !== '') {
-                    $shown->addMessage(Message::assistant($message->getText(), $transfers ?: null));
-                }
+            if (!$message->isAssistant()) {
+                $shown->addMessage($message);
 
                 continue;
             }
 
-            if (!$message->isTool() || in_array($message->toolCallId, $transferIds, true)) {
-                $shown->addMessage($message);
+            if ($message->getText() !== '') {
+                $shown->addAssistant($message->getText());
+            }
+
+            foreach (array_filter($message->toolCalls ?? [], $this->isTransfer(...)) as $transfer) {
+                $target = substr($transfer->name, strlen(self::TOOL_PREFIX));
+                $shown->addUser($this->handoffAsReadBy($reader, $holder, $target));
+                $holder = $target;
             }
         }
 
         return $shown;
+    }
+
+    private function handoffAsReadBy(string $reader, string $from, string $to): string
+    {
+        return sprintf(
+            '[%s handed this conversation over to %s.]',
+            $from === $reader ? 'You' : $from,
+            $to === $reader ? 'you' : $to,
+        );
     }
 }

@@ -483,7 +483,7 @@ class Schema
                 break;
 
             case SchemaType::Object:
-                if (!is_array($value) || array_is_list($value)) {
+                if (!is_array($value) || ($value !== [] && array_is_list($value))) {
                     $errors[] = "{$path}: Expected object, got " . gettype($value);
                 } else {
                     // Check required properties
