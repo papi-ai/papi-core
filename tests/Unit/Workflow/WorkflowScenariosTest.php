@@ -90,8 +90,8 @@ describe('Workflow scenarios', function () {
         $reviewed = (new Workflow('reviewed-draft'))
             ->step('draft', fn (State $s) => $writer->run($s->has('review')
                 ? "Revise:\n{$s->get('draft')}\nIssues:\n" . implode("\n", $s->get('review')['issues'])
-                : $s->get('brief')))
-            ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]), atMost: 3)
+                : $s->get('brief')), atMost: 3)
+            ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]))
             ->step('decide', fn (State $s) => $s->get('review')['approved'] ? null : new JumpTo('draft'));
 
         $result = $reviewed->start(['brief' => 'Write about workflows.']);
@@ -100,21 +100,25 @@ describe('Workflow scenarios', function () {
         expect($result->state->get('draft'))->toBe('Draft two');
     });
 
-    it('3. gives up after the review limit and reports the open issues', function () {
-        $writer = scripted();
-        $critic = scripted(...array_fill(0, 3, reply('{"approved": false, "issues": ["Still vague"]}')));
+    it('3. gives up after the draft limit, with the last draft and the review of that draft', function () {
+        $writer = scripted(reply('Draft one'), reply('Draft two'), reply('Draft three'));
+        $critic = scripted(
+            reply('{"approved": false, "issues": ["One is vague"]}'),
+            reply('{"approved": false, "issues": ["Two is vague"]}'),
+            reply('{"approved": false, "issues": ["Three is vague"]}'),
+        );
         $verdict = Schema::object(['approved' => Schema::boolean(), 'issues' => Schema::array(Schema::string())]);
 
         $reviewed = (new Workflow('reviewed-draft'))
-            ->step('draft', fn (State $s) => $writer->run($s->get('brief')))
-            ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]), atMost: 3)
+            ->step('draft', fn (State $s) => $writer->run($s->get('brief')), atMost: 3)
+            ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]))
             ->step('decide', fn (State $s) => $s->get('review')['approved'] ? null : new JumpTo('draft'));
 
         $result = $reviewed->start(['brief' => 'Write about workflows.']);
 
         expect($result->status)->toBe(Status::LimitReached);
-        expect($result->state->get('review')['issues'])->toBe(['Still vague']);
-        expect($result->state->get('draft'))->toBe('done');
+        expect($result->state->get('draft'))->toBe('Draft three');
+        expect($result->state->get('review')['issues'])->toBe(['Three is vague']);
         expect($result->error)->toBeNull();
     });
 
