@@ -26,9 +26,11 @@ use PapiAI\Core\Contracts\ContinuesConversationInterface;
  * starting agent when there is none. So storing the conversation is all it takes for the next
  * message to reach the right agent.
  *
- * An agent is shown the user's messages, the assistants' text and the transfers. Tool calls an
- * agent made for itself are left out for the others, as is provider replay data: both are bound
- * to the agent that produced them.
+ * An agent is shown the user's messages, what the assistants said, and each handoff as a note
+ * in the transcript ("[triage handed this conversation over to you.]"), so a transfer reads as
+ * something that happened and not as a call the reader made. Tool calls and their results are
+ * left out, as is provider replay data: both are bound to the agent that produced them. The
+ * stored conversation keeps every call and result.
  */
 final class Handoffs
 {
@@ -81,7 +83,7 @@ final class Handoffs
         $hops = 0;
 
         do {
-            $shown = $this->shownToAgents($whole);
+            $shown = $this->shownTo($current, $whole);
             $before = count($shown->getMessages());
             $response = $this->agents[$current]->continue($shown);
             $usage = $usage->plus($response->usage);
@@ -146,31 +148,45 @@ final class Handoffs
     }
 
     /**
-     * The conversation every agent can read: user messages, assistant text, and the transfers
-     * with their results.
+     * The conversation as one agent reads it: user messages, what the assistants said, and a
+     * note for each handoff, worded for the reader.
      */
-    private function shownToAgents(Conversation $whole): Conversation
+    private function shownTo(string $reader, Conversation $whole): Conversation
     {
         $shown = new Conversation();
-        $transferIds = [];
+        $holder = $this->start;
 
         foreach ($whole->getMessages() as $message) {
-            if ($message->isAssistant()) {
-                $transfers = array_values(array_filter($message->toolCalls ?? [], $this->isTransfer(...)));
-                array_push($transferIds, ...array_map(static fn (ToolCall $toolCall): string => $toolCall->id, $transfers));
+            if ($message->isTool()) {
+                continue;
+            }
 
-                if ($transfers !== [] || $message->getText() !== '') {
-                    $shown->addMessage(Message::assistant($message->getText(), $transfers ?: null));
-                }
+            if (!$message->isAssistant()) {
+                $shown->addMessage($message);
 
                 continue;
             }
 
-            if (!$message->isTool() || in_array($message->toolCallId, $transferIds, true)) {
-                $shown->addMessage($message);
+            if ($message->getText() !== '') {
+                $shown->addAssistant($message->getText());
+            }
+
+            foreach (array_filter($message->toolCalls ?? [], $this->isTransfer(...)) as $transfer) {
+                $target = substr($transfer->name, strlen(self::TOOL_PREFIX));
+                $shown->addUser($this->handoffAsReadBy($reader, $holder, $target));
+                $holder = $target;
             }
         }
 
         return $shown;
+    }
+
+    private function handoffAsReadBy(string $reader, string $from, string $to): string
+    {
+        return sprintf(
+            '[%s handed this conversation over to %s.]',
+            $from === $reader ? 'You' : $from,
+            $to === $reader ? 'you' : $to,
+        );
     }
 }

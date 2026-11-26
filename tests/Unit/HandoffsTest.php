@@ -105,9 +105,56 @@ describe('Handoffs', function () {
         $desk->reply($conversation);
 
         $shown = array_map(static fn ($message): string => $message->role->value, $closer->calls[0]['messages']);
-        expect($shown)->toBe(['user', 'assistant', 'tool']);
-        expect($closer->calls[0]['messages'][1]->toolCalls[0]->name)->toBe('transfer_to_closer');
+        expect($shown)->toBe(['user', 'user']);
         expect($conversation->count())->toBe(6);
+    });
+
+    it('shows the receiving agent a handoff as something that happened to it, not a call it made', function () {
+        $conversation = (new Conversation())->addUser('I was charged twice this month.');
+
+        $this->desk->reply($conversation);
+
+        $sent = array_map(
+            static fn ($message): array => [$message->role->value, $message->getText(), $message->toolCalls],
+            $this->billing->calls[0]['messages'],
+        );
+        expect($sent)->toBe([
+            ['system', 'You handle billing.', null],
+            ['user', 'I was charged twice this month.', null],
+            ['user', '[triage handed this conversation over to you.]', null],
+        ]);
+    });
+
+    it('words a handoff for whoever reads it', function () {
+        $triage = new ScriptedProvider(false, transferTo('billing', 't1'), new Response('Anything else?'));
+        $billing = new ScriptedProvider(false, new Response('Let me pass you back.', toolCalls: [new ToolCall('b1', 'transfer_to_triage', [])]));
+        $desk = new Handoffs(['triage' => new Agent($triage, 'm'), 'billing' => new Agent($billing, 'm')], start: 'triage');
+
+        $desk->reply((new Conversation())->addUser('Hello'));
+
+        $read = array_map(static fn ($message): string => $message->role->value . ': ' . $message->getText(), $triage->calls[1]['messages']);
+        expect($read)->toBe([
+            'user: Hello',
+            'user: [You handed this conversation over to billing.]',
+            'assistant: Let me pass you back.',
+            'user: [billing handed this conversation over to you.]',
+        ]);
+    });
+
+    it('names both agents of a handoff to a third', function () {
+        $triage = new ScriptedProvider(false, transferTo('billing', 't1'));
+        $billing = new ScriptedProvider(false, transferTo('technical', 'b1'));
+        $technical = new ScriptedProvider(false, new Response('Fixed.'));
+        $desk = new Handoffs([
+            'triage' => new Agent($triage, 'm'),
+            'billing' => new Agent($billing, 'm'),
+            'technical' => new Agent($technical, 'm'),
+        ], start: 'triage');
+
+        $desk->reply((new Conversation())->addUser('Hello'));
+
+        expect($technical->calls[0]['messages'][1]->getText())->toBe('[triage handed this conversation over to billing.]');
+        expect($technical->calls[0]['messages'][2]->getText())->toBe('[billing handed this conversation over to you.]');
     });
 
     it('leaves the conversation as it was when an agent fails after a handoff', function () {
