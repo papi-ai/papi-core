@@ -283,8 +283,8 @@ use PapiAI\Core\Workflow\State;
 use PapiAI\Core\Workflow\Workflow;
 
 $reviewed = (new Workflow('reviewed-draft'))
-    ->step('draft', fn (State $s) => $writer->run($s->get('brief')))
-    ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]), atMost: 3)
+    ->step('draft', fn (State $s) => $writer->run($s->get('brief')), atMost: 3)
+    ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]))
     ->step('decide', fn (State $s) => $s->get('review')['approved'] ? null : new JumpTo('draft'));
 
 $result = $reviewed->start(['brief' => 'Announce version 2 of our API.']);
@@ -457,6 +457,19 @@ Then declare the package type and the factory in its `composer.json`:
     "extra": {"papi": {"factory": "Acme\\MyProviderFactory"}}
 }
 ```
+
+## Upgrading to 0.15.10
+
+- A tool without parameters, and any schema with an empty object in it, is now sent with
+  `"properties": {}`. Before, it left as `[]` and providers refused the request; this includes
+  every `Handoffs` transfer tool. `Schema` validation also accepts an empty object in a reply.
+- `Handoffs`: an agent now reads a handoff as a note in the transcript
+  (`[triage handed this conversation over to you.]`), not as a tool call of its own. The stored
+  conversation is unchanged, so `current()` and existing chats keep working.
+- `Handoffs::reply()` throws `HandoffLimitException` when the agents hand over more than `maxHops`
+  times without answering, and leaves the conversation untouched. It used to return an empty
+  response with `handoff` set, after storing the transfers.
+- Workflow hooks: a step that paused now fires `afterStep` when `resume()` completes it.
 
 ## Upgrading to 0.15.9
 

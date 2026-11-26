@@ -100,7 +100,8 @@ echo $article->start(['topic' => 'Workflows in PHP'])->output;
 
 A step may run at most `atMost` times in a run (25 by default). Reaching the limit is an
 outcome, not an exception: the run ends as `Status::LimitReached` with everything done so far
-still in the state.
+still in the state. Put the limit on the step that produces the work, here `draft`, so the run
+ends with the last draft and the review of that draft.
 
 ```php
 $writer = $agent('You write short product announcements.');
@@ -110,14 +111,14 @@ $verdict = Schema::object(['approved' => Schema::boolean(), 'issues' => Schema::
 $reviewed = (new Workflow('reviewed-draft'))
     ->step('draft', fn (State $s) => $writer->run($s->has('review')
         ? "Revise this draft:\n{$s->get('draft')}\n\nFix these issues:\n" . implode("\n", $s->get('review')['issues'])
-        : $s->get('brief')))
-    ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]), atMost: 3)
+        : $s->get('brief')), atMost: 3)
+    ->step('review', fn (State $s) => $critic->run($s->get('draft'), ['outputSchema' => $verdict]))
     ->step('decide', fn (State $s) => $s->get('review')['approved'] ? null : new JumpTo('draft'));
 
 $result = $reviewed->start(['brief' => 'Announce version 2 of our API.']);
 
 if ($result->status === Status::LimitReached) {
-    echo "Not approved after three reviews:\n" . implode("\n", $result->state->get('review')['issues']);
+    echo "Not approved after three drafts:\n" . implode("\n", $result->state->get('review')['issues']);
 } else {
     echo $result->state->get('draft');
 }
@@ -198,6 +199,9 @@ $workflow
 
 For an `each()` step, `beforeStep` and `afterStep` fire once when the list is read and once per item.
 
+A step that pauses fires `beforeStep` and `onPause`. Its `afterStep` fires when `resume()` gives
+it its answer, with the answer already in the state and saved; `beforeStep` is not repeated.
+
 ## Stores
 
 `WorkflowStoreInterface` has three methods: `save(State $state)`, `load(string $id): ?State` and
@@ -246,10 +250,13 @@ echo $desk->current($conversation);       // "billing"
   the starting agent. Saving the conversation is all the bookkeeping there is.
 - `reply()` appends what the agents added. If an agent throws, the conversation is left exactly
   as it was, so save it only after `reply()` returns.
-- An agent sees the user's messages, the assistants' text and the transfers. **Tool calls an
-  agent made for itself are not shown to the others**, and neither is provider replay data such
-  as reasoning signatures: both belong to the agent that produced them. An agent that needs to
-  pass on what a tool found should say it in its reply.
-- One `reply()` follows at most five handoffs.
+- An agent sees the user's messages, what the assistants said, and a note for each handoff, such
+  as `[triage handed this conversation over to you.]`. **Tool calls and their results are not
+  shown**, not even an agent's own from an earlier turn, and neither is provider replay data such
+  as reasoning signatures: both belong to the run that produced them. An agent that needs what a
+  tool found on a later turn should say it in its reply. The stored conversation keeps everything.
+- One `reply()` follows at most five handoffs (`maxHops`). If the agents hand over once more
+  without answering, `reply()` throws a `HandoffLimitException` and leaves the conversation as
+  it was; the exception carries the tokens spent.
 
 A single agent can also continue a stored conversation directly, with `$agent->continue($conversation)`.
