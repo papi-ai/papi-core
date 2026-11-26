@@ -116,6 +116,12 @@ Schema::enum(['a', 'b', 'c'])           // Enum values
 ->description('...')   // Hint for the LLM
 ```
 
+`pattern()` takes a PHP regular expression, delimiters included, and checks values with
+`preg_match`. Providers receive it as a JSON Schema pattern, without the delimiters:
+`'/^[A-Z]{3}$/'` is sent as `^[A-Z]{3}$`. JSON Schema has no flags, so `toJsonSchema()` drops a
+trailing `u` and throws an `InvalidArgumentException` for any other (`i`, `m`, `s`, `x`). A schema
+used only for local validation can carry any flag.
+
 ## Streaming
 
 ### Simple Text Streaming
